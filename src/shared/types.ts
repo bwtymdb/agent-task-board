@@ -2,7 +2,7 @@ export type Platform = 'kimi-code' | 'workbuddy' | 'kimi-work'
 export type Light = 'red' | 'yellow' | 'green'
 export type ThemeName = 'midnight' | 'yellow' | 'mint' | 'sky' | 'lavender' | 'rose'
 
-export type BackgroundTask = { id: string; kind: string; description: string; status: string }
+export type BackgroundTask = { id: string; kind: string; description: string; status: string; command?: string }
 
 export type TaskItem = {
   key: string

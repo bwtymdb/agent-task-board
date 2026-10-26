@@ -86,6 +86,10 @@ export class KimiCodeApi {
     return data?.items ?? []
   }
 
+  async getTask(id: string, taskId: string): Promise<BackgroundTask> {
+    return await this.request(`/api/v1/sessions/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}`) as BackgroundTask
+  }
+
   async cancelTask(id: string, taskId: string) {
     await this.request(`/api/v1/sessions/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}:cancel`, { method: 'POST', body: '{}' })
   }

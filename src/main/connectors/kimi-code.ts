@@ -4,6 +4,7 @@ import { mapNativeStatus } from '../../shared/status.ts'
 import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
 import { KimiCodeApi } from './kimi-code-api.ts'
 import { readWireStatus } from './kimi-code-wire.ts'
+import { isOwnBoardCommand } from './board-process.ts'
 
 type IndexEntry = { sessionId: string; sessionDir: string; workDir?: string }
 type HookPayload = {
@@ -62,7 +63,11 @@ export class KimiCodeConnector {
       try {
         const sessions = await this.api.listSessions()
         await Promise.all(sessions.filter(task => task.reason === '后台任务进行中').map(async task => {
-          task.backgroundTasks = await this.api.listTasks(task.nativeId)
+          task.backgroundTasks = (await this.api.listTasks(task.nativeId)).filter(item => !isOwnBoardCommand(item.command))
+          if (!task.mainTurnActive && task.backgroundTasks.length === 0) {
+            task.light = 'green'
+            task.reason = '本轮完成 / 空闲'
+          }
         }))
         this.apiTasks = new Map(sessions.map(task => [task.key, task]))
         this.apiAvailable = true
@@ -132,6 +137,8 @@ export class KimiCodeConnector {
   }
 
   async cancelBackgroundTask(id: string, taskId: string) {
+    const task = await this.api.getTask(id, taskId)
+    if (isOwnBoardCommand(task.command) || task.status !== 'running') throw new Error('看板不能终止自身进程或已结束的任务')
     await this.api.cancelTask(id, taskId)
     await this.refresh()
   }
