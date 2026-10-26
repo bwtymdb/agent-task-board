@@ -18,6 +18,7 @@ const api: BoardApi = {
   renameTask: (key, title) => ipcRenderer.invoke('task:rename', key, title),
   archiveTask: (key, archived) => ipcRenderer.invoke('task:archive', key, archived),
   toggleFocus: key => ipcRenderer.invoke('task:toggle-focus', key),
+  cancelBackgroundTask: (key, taskId) => ipcRenderer.invoke('task:cancel-background', key, taskId),
   openTask: key => ipcRenderer.invoke('task:open', key),
   installKimiHooks: () => ipcRenderer.invoke('kimi:install-hooks'),
   toggleClickThrough: () => ipcRenderer.invoke('window:toggle-click-through'),

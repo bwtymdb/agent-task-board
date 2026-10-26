@@ -20,9 +20,10 @@ type Props = {
   onRename: (title: string) => void
   onArchive: () => void
   onFocus: () => void
+  onCancelBackground: (taskId: string) => void
 }
 
-export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive, onFocus }: Props) {
+export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive, onFocus, onCancelBackground }: Props) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(task.title)
   const directory = task.cwd?.replaceAll('\\', '/').split('/').filter(Boolean).at(-1)
@@ -56,6 +57,7 @@ export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive,
       <button className="action-primary" onClick={onOpen}>{task.platform === 'kimi-work' ? '打开平台' : '打开原对话'}</button>
       <button onClick={() => { setTitle(task.title); setEditing(true) }}>{task.platform === 'kimi-work' ? '看板别名' : '同步重命名'}</button>
       {task.platform !== 'kimi-work' && <button className={`archive-button ${task.archived ? 'archived' : ''}`} onClick={onArchive}>{task.archived ? '取消归档' : '平台归档'}</button>}
+      {task.platform === 'kimi-code' && (task.backgroundTasks?.length ?? 0) > 0 && <button className="stop-background" title={task.backgroundTasks?.map(item => item.description).join('\n')} onClick={() => task.backgroundTasks?.forEach(item => onCancelBackground(item.id))}>停止后台任务 ({task.backgroundTasks?.length})</button>}
     </div>}
   </article>
 }

@@ -61,6 +61,9 @@ export class KimiCodeConnector {
       this.history = next
       try {
         const sessions = await this.api.listSessions()
+        await Promise.all(sessions.filter(task => task.reason === '后台任务进行中').map(async task => {
+          task.backgroundTasks = await this.api.listTasks(task.nativeId)
+        }))
         this.apiTasks = new Map(sessions.map(task => [task.key, task]))
         this.apiAvailable = true
       } catch {
@@ -125,6 +128,11 @@ export class KimiCodeConnector {
 
   async setArchived(id: string, archived: boolean) {
     await this.api.setArchived(id, archived)
+    await this.refresh()
+  }
+
+  async cancelBackgroundTask(id: string, taskId: string) {
+    await this.api.cancelTask(id, taskId)
     await this.refresh()
   }
 

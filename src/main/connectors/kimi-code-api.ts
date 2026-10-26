@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { mapNativeStatus } from '../../shared/status.ts'
-import type { TaskItem } from '../../shared/types.ts'
+import type { BackgroundTask, TaskItem } from '../../shared/types.ts'
 
 type ApiSession = {
   id: string
@@ -73,11 +73,21 @@ export class KimiCodeApi {
       return {
         key: `kimi-code:${session.id}`, nativeId: session.id, platform: 'kimi-code',
         title: session.title || '未命名 Kimi Code 会话', cwd: session.metadata?.cwd,
-        light: mapped.light, reason: mapped.reason,
+        light: mapped.light, reason: session.busy && !session.main_turn_active ? '后台任务进行中' : mapped.reason,
         updatedAt: Date.parse(session.updated_at || '') || Date.now(),
-        archived: Boolean(session.archived), unread: false, stale: false, focused: false
+        archived: Boolean(session.archived), unread: false, stale: false, focused: false,
+        mainTurnActive: session.main_turn_active
       }
     })
+  }
+
+  async listTasks(id: string): Promise<BackgroundTask[]> {
+    const data = await this.request(`/api/v1/sessions/${encodeURIComponent(id)}/tasks?status=running`) as { items?: BackgroundTask[] } | undefined
+    return data?.items ?? []
+  }
+
+  async cancelTask(id: string, taskId: string) {
+    await this.request(`/api/v1/sessions/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}:cancel`, { method: 'POST', body: '{}' })
   }
 
   async rename(id: string, title: string) {

@@ -114,6 +114,7 @@ export default function App() {
         onRename={title => run(async () => showResult(await window.board.renameTask(task.key, title)))}
         onArchive={() => run(async () => showResult(await window.board.archiveTask(task.key, !task.archived)))}
         onFocus={() => run(async () => setSettings(await window.board.toggleFocus(task.key)))}
+        onCancelBackground={taskId => run(async () => showResult(await window.board.cancelBackgroundTask(task.key, taskId)))}
       />)}
       {loaded && visibleTasks.length === 0 && <div className="empty-state"><span className="empty-lights"><i /><i /><i /></span><h2>{view === 'focus' ? '还没有重点任务' : view === 'archived' ? '没有归档会话' : '没有匹配的任务'}</h2><p>{view === 'focus' ? '在“全部对话”中点星标，把正在处理的工作加入这里。' : '切换筛选条件，或回到其他页面查看。'}</p>{view === 'focus' && <button onClick={() => setView('all')}>去全部对话选择</button>}</div>}
     </section>

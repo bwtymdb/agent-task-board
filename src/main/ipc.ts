@@ -44,6 +44,10 @@ export function registerIpc(context: IpcContext) {
     else focused[key] = true
     return updateSettings({ focused })
   })
+  ipcMain.handle('task:cancel-background', async (event, key: string, taskId: string) => {
+    await hub.cancelBackgroundTask(key, taskId)
+    return { ok: true, message: '已终止指定的后台任务。' }
+  })
   ipcMain.handle('task:open', async (event, key: string) => {
     const task = hub.getTask(key)
     if (!task) return { ok: false, message: '任务已不存在，请刷新后重试。' }

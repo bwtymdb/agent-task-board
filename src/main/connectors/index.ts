@@ -84,6 +84,11 @@ export class ConnectorHub {
     else throw new Error('该平台不支持归档')
   }
 
+  async cancelBackgroundTask(key: string, taskId: string) {
+    if (!key.startsWith('kimi-code:')) throw new Error('只有 Kimi Code 支持终止后台任务')
+    await this.kimiCode.cancelBackgroundTask(key.slice(10), taskId)
+  }
+
   getSnapshot() { return this.lastSnapshot }
   getTask(key: string) { return this.lastSnapshot.tasks.find(task => task.key === key) }
 

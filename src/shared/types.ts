@@ -2,6 +2,8 @@ export type Platform = 'kimi-code' | 'workbuddy' | 'kimi-work'
 export type Light = 'red' | 'yellow' | 'green'
 export type ThemeName = 'midnight' | 'yellow' | 'mint' | 'sky' | 'lavender' | 'rose'
 
+export type BackgroundTask = { id: string; kind: string; description: string; status: string }
+
 export type TaskItem = {
   key: string
   nativeId: string
@@ -15,6 +17,8 @@ export type TaskItem = {
   unread: boolean
   stale: boolean
   focused?: boolean
+  mainTurnActive?: boolean
+  backgroundTasks?: BackgroundTask[]
   heartbeat?: boolean
   url?: string
 }
@@ -55,6 +59,7 @@ export type BoardApi = {
   renameTask: (key: string, title: string) => Promise<{ ok: boolean; message: string }>
   archiveTask: (key: string, archived: boolean) => Promise<{ ok: boolean; message: string }>
   toggleFocus: (key: string) => Promise<Settings>
+  cancelBackgroundTask: (key: string, taskId: string) => Promise<{ ok: boolean; message: string }>
   openTask: (key: string) => Promise<{ ok: boolean; message: string }>
   installKimiHooks: () => Promise<{ ok: boolean; message: string }>
   toggleClickThrough: () => Promise<Settings>
