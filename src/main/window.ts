@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'node:path'
-import type { DockEdge, Settings, WindowBounds } from '../shared/types.ts'
+import type { DockEdge, Settings, TaskItem, WindowBounds } from '../shared/types.ts'
 
 export class BoardWindow {
   readonly win: BrowserWindow
@@ -11,6 +11,7 @@ export class BoardWindow {
   private outsideSince = 0
   private saveTimer?: NodeJS.Timeout
   private dockTimer?: NodeJS.Timeout
+  private dockTasks: TaskItem[] = []
 
   constructor(settings: Settings, private readonly saveSettings: (patch: Partial<Settings>) => Settings, private readonly onSettings: (settings: Settings) => void) {
     this.settings = settings
@@ -38,7 +39,12 @@ export class BoardWindow {
     this.win.setAlwaysOnTop(settings.alwaysOnTop, 'screen-saver')
     this.setClickThrough(settings.clickThrough)
     this.ensureVisible()
-    this.win.once('ready-to-show', () => this.win.show())
+    this.win.once('ready-to-show', () => {
+      if (this.settings.dockEdge) this.collapseToEdge()
+      else this.win.show()
+      this.broadcastDockState()
+    })
+    this.win.webContents.on('did-finish-load', () => this.broadcastDockState())
     this.win.on('moved', () => {
       if (this.applyingBounds) return
       this.scheduleSave()
@@ -56,7 +62,13 @@ export class BoardWindow {
     if (patch.alwaysOnTop !== undefined) this.win.setAlwaysOnTop(this.settings.alwaysOnTop, 'screen-saver')
     if (patch.clickThrough !== undefined) this.setClickThrough(this.settings.clickThrough)
     this.onSettings(this.settings)
+    this.broadcastDockState()
     return this.settings
+  }
+
+  updateDockTasks(tasks: TaskItem[]) {
+    this.dockTasks = tasks.filter(task => task.focused && !task.archived)
+    if (this.isCollapsed()) this.collapseToEdge()
   }
 
   setClickThrough(enabled: boolean) {
@@ -64,10 +76,25 @@ export class BoardWindow {
   }
 
   toggleClickThrough() { return this.update({ clickThrough: !this.settings.clickThrough }) }
-  show() { this.win.show(); this.win.focus() }
+  show() {
+    if (this.settings.dockEdge && this.expandedBounds) {
+      this.hoverExpanded = true
+      this.win.setMinimumSize(340, 360)
+      this.win.setBounds(this.expandedBounds)
+      this.broadcastDockState()
+    }
+    this.win.show()
+    this.win.focus()
+  }
   hide() { this.win.hide() }
   broadcast(channel: string, payload: unknown) {
     if (!this.win.isDestroyed()) this.win.webContents.send(channel, payload)
+  }
+
+  private isCollapsed() { return Boolean(this.settings.dockEdge && !this.hoverExpanded) }
+
+  private broadcastDockState() {
+    this.broadcast('dock:state', { collapsed: this.isCollapsed(), edge: this.settings.dockEdge })
   }
 
   private scheduleSave() {
@@ -108,34 +135,26 @@ export class BoardWindow {
     this.settings = this.saveSettings({ dockEdge: edge, bounds: this.expandedBounds })
     this.hoverExpanded = false
     this.collapseToEdge()
+    this.broadcastDockState()
   }
 
   private collapseToEdge() {
     const edge = this.settings.dockEdge
     if (!edge || !this.expandedBounds) return
-    const display = screen.getDisplayMatching(this.expandedBounds)
-    const area = display.workArea
-    const size = 10
-    const length = 160
+    const area = screen.getDisplayMatching(this.expandedBounds).workArea
+    const count = this.dockTasks.length
+    const rows = Math.max(1, Math.min(count, 8))
+    const width = 184
+    const height = Math.min(34 + rows * 26 + (count > 8 ? 24 : 8), Math.floor(area.height * 0.65))
     const centerX = this.expandedBounds.x + this.expandedBounds.width / 2
     const centerY = this.expandedBounds.y + this.expandedBounds.height / 2
-    let bounds: WindowBounds
-    if (edge === 'left' || edge === 'right') {
-      bounds = {
-        x: edge === 'left' ? area.x : area.x + area.width - size,
-        y: Math.max(area.y, Math.min(centerY - length / 2, area.y + area.height - length)),
-        width: size, height: length
-      }
-    } else {
-      bounds = {
-        x: Math.max(area.x, Math.min(centerX - length / 2, area.x + area.width - length)),
-        y: edge === 'top' ? area.y : area.y + area.height - size,
-        width: length, height: size
-      }
-    }
+    const x = edge === 'left' ? area.x : edge === 'right' ? area.x + area.width - width
+      : Math.max(area.x, Math.min(centerX - width / 2, area.x + area.width - width))
+    const y = edge === 'top' ? area.y : edge === 'bottom' ? area.y + area.height - height
+      : Math.max(area.y, Math.min(centerY - height / 2, area.y + area.height - height))
     this.applyingBounds = true
-    this.win.setMinimumSize(10, 10)
-    this.win.setBounds(bounds)
+    this.win.setMinimumSize(120, 60)
+    this.win.setBounds({ x, y, width, height })
     this.applyingBounds = false
   }
 
@@ -151,6 +170,7 @@ export class BoardWindow {
       this.win.setMinimumSize(340, 360)
       if (this.expandedBounds) this.win.setBounds(this.expandedBounds)
       this.applyingBounds = false
+      this.broadcastDockState()
     }
     if (this.hoverExpanded && !near) {
       if (!this.outsideSince) this.outsideSince = Date.now()
@@ -158,6 +178,7 @@ export class BoardWindow {
         this.hoverExpanded = false
         this.outsideSince = 0
         this.collapseToEdge()
+        this.broadcastDockState()
       }
     } else this.outsideSince = 0
   }

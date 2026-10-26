@@ -28,7 +28,7 @@ export class KimiWorkConnector {
       const parsed = JSON.parse(readFileSync(this.filePath, 'utf8')) as Record<string, string>
       const modified = statSync(this.filePath).mtimeMs
       this.tasks = Object.entries(parsed).flatMap(([key, status]) => {
-        const match = key.match(/conversation:([0-9a-f-]{36})/i)
+        const match = key.match(/^agent:main:main:conversation:([0-9a-f-]{36})$/i)
         if (!match) return []
         const id = match[1]
         const mapped = mapNativeStatus('kimi-work', status)
@@ -39,7 +39,7 @@ export class KimiWorkConnector {
           archived: false, unread: false, stale: false
         }]
       })
-      this.health = { platform: 'kimi-work', connected: true, detail: `本地状态 · ${this.tasks.length} 个会话；标题和会话直达受平台接口限制`, stale: false }
+      this.health = { platform: 'kimi-work', connected: true, detail: `本地状态 · ${this.tasks.length} 个 Work 会话；不纳入 Chat，直达受平台接口限制`, stale: false }
     } catch (error) {
       this.tasks = this.tasks.map(task => ({ ...task, stale: true }))
       this.health = { platform: 'kimi-work', connected: false, detail: `读取失败：${error instanceof Error ? error.message : String(error)}`, stale: true }

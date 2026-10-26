@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { mapNativeStatus } from '../../shared/status.ts'
 import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
+import { KimiCodeApi } from './kimi-code-api.ts'
+import { readWireStatus } from './kimi-code-wire.ts'
 
 type IndexEntry = { sessionId: string; sessionDir: string; workDir?: string }
 type HookPayload = {
@@ -16,18 +18,30 @@ type HookPayload = {
 
 export class KimiCodeConnector {
   readonly platform = 'kimi-code' as const
+  private readonly api: KimiCodeApi
   private history = new Map<string, TaskItem>()
   private live = new Map<string, TaskItem>()
+  private wire = new Map<string, TaskItem>()
+  private apiTasks = new Map<string, TaskItem>()
+  private apiAvailable = false
+  private timer?: NodeJS.Timeout
+  private refreshing = false
   private health: ConnectorHealth = { platform: 'kimi-code', connected: false, detail: '尚未连接', stale: false }
 
-  constructor(readonly home: string, private readonly notify: () => void) {}
+  constructor(readonly home: string, private readonly notify: () => void) {
+    this.api = new KimiCodeApi(home)
+  }
 
-  async start() { await this.refresh() }
+  async start() {
+    await this.refresh()
+    this.timer = setInterval(() => void this.refresh(), 2000)
+  }
 
   async refresh() {
+    if (this.refreshing) return
+    this.refreshing = true
     try {
-      const indexPath = join(this.home, 'session_index.jsonl')
-      const entries = readFileSync(indexPath, 'utf8').split(/\r?\n/).filter(Boolean)
+      const entries = readFileSync(join(this.home, 'session_index.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean)
         .flatMap(line => { try { return [JSON.parse(line) as IndexEntry] } catch { return [] } })
       const next = new Map<string, TaskItem>()
       for (const entry of entries) {
@@ -36,19 +50,40 @@ export class KimiCodeConnector {
         if (!existsSync(statePath)) continue
         try {
           const state = JSON.parse(readFileSync(statePath, 'utf8'))
-          const updatedAt = Number(state.updatedAt) || Date.parse(state.updatedAt) || Date.now()
           next.set(entry.sessionId, {
             key: `kimi-code:${entry.sessionId}`, nativeId: entry.sessionId, platform: 'kimi-code',
             title: state.title || '未命名 Kimi Code 会话', cwd: state.cwd || entry.workDir,
-            light: 'green', reason: '历史 / 空闲', updatedAt,
-            archived: Boolean(state.archived), unread: false, stale: false
+            light: 'green', reason: '历史 / 空闲', updatedAt: Number(state.updatedAt) || Date.now(),
+            archived: Boolean(state.archived), unread: false, stale: false, focused: false
           })
-        } catch { /* Skip a state file that is being replaced. */ }
+        } catch { /* Keep the previous valid snapshot for a file being replaced. */ }
       }
       this.history = next
-      this.health = { platform: 'kimi-code', connected: true, detail: `本地会话 + Hooks · ${next.size} 个会话`, stale: false }
+      try {
+        const sessions = await this.api.listSessions()
+        this.apiTasks = new Map(sessions.map(task => [task.key, task]))
+        this.apiAvailable = true
+      } catch {
+        this.apiAvailable = false
+      }
+      if (!this.apiAvailable) {
+        for (const entry of entries) {
+          const key = `kimi-code:${entry.sessionId}`
+          if (!existsSync(join(this.home, 'locks', 'sessions', `${entry.sessionId}.lock`)) && !this.live.has(key)) continue
+          const status = readWireStatus(join(entry.sessionDir, 'agents', 'main', 'wire.jsonl'))
+          const base = this.history.get(entry.sessionId)
+          if (status && base) this.wire.set(key, { ...base, ...status, stale: false })
+        }
+      }
+      this.health = {
+        platform: 'kimi-code', connected: true,
+        detail: `${this.apiAvailable ? '官方实时状态' : '本地事件回放'} + Hooks · ${next.size} 个会话`,
+        stale: !this.apiAvailable
+      }
     } catch (error) {
       this.health = { platform: 'kimi-code', connected: false, detail: `读取失败：${error instanceof Error ? error.message : String(error)}`, stale: true }
+    } finally {
+      this.refreshing = false
     }
     this.notify()
   }
@@ -61,7 +96,7 @@ export class KimiCodeConnector {
     const previous = this.live.get(key) || this.history.get(key)
     const base: TaskItem = previous || {
       key, nativeId: id, platform: 'kimi-code', title: payload.session_title || '未命名 Kimi Code 会话',
-      cwd: payload.cwd, light: 'green', reason: '空闲', updatedAt: Date.now(), archived: false, unread: false, stale: false
+      cwd: payload.cwd, light: 'green', reason: '空闲', updatedAt: Date.now(), archived: false, unread: false, stale: false, focused: false
     }
     let next = { ...base, title: payload.session_title || base.title, cwd: payload.cwd || base.cwd, stale: false }
     if (event === 'SessionHeartbeat') {
@@ -83,11 +118,23 @@ export class KimiCodeConnector {
     this.notify()
   }
 
+  async rename(id: string, title: string) {
+    await this.api.rename(id, title)
+    await this.refresh()
+  }
+
+  async setArchived(id: string, archived: boolean) {
+    await this.api.setArchived(id, archived)
+    await this.refresh()
+  }
+
   getTasks() {
     const merged = new Map([...this.history.values()].map(task => [task.key, task]))
+    if (!this.apiAvailable) for (const [key, value] of this.wire) merged.set(key, { ...merged.get(key), ...value })
     for (const [key, value] of this.live) merged.set(key, { ...merged.get(key), ...value })
+    if (this.apiAvailable) for (const [key, value] of this.apiTasks) merged.set(key, { ...merged.get(key), ...value })
     return [...merged.values()]
   }
   getHealth() { return this.health }
-  async stop() {}
+  async stop() { clearInterval(this.timer) }
 }

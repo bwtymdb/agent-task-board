@@ -3,7 +3,6 @@ import type { BoardSnapshot, ConnectorHealth, Settings, TaskItem } from '../../s
 import { KimiCodeConnector } from './kimi-code.ts'
 import { KimiWorkConnector } from './kimi-work.ts'
 import { WorkBuddyConnector } from './workbuddy.ts'
-import { manualTaskItems } from './manual.ts'
 
 type Connector = {
   start: () => Promise<void>
@@ -15,21 +14,23 @@ type Connector = {
 
 export class ConnectorHub {
   readonly kimiCode: KimiCodeConnector
+  readonly workBuddy: WorkBuddyConnector
   private readonly connectors: Connector[]
   private readonly listeners = new Set<(snapshot: BoardSnapshot) => void>()
   private notifyTimer?: NodeJS.Timeout
   private heartbeatTimer?: NodeJS.Timeout
   private lastSnapshot: BoardSnapshot = { tasks: [], health: [], updatedAt: Date.now() }
 
-  constructor(private readonly getSettings: () => Settings) {
+  constructor(private readonly getSettings: () => Settings, backupDirectory: string) {
     const settings = getSettings()
     const home = settings.kimiCodeHome || `${process.env.USERPROFILE}/.kimi-code`
     const workbuddyDb = settings.workbuddyDb || `${process.env.USERPROFILE}/.workbuddy/workbuddy.db`
     const workFile = settings.kimiWorkStatusFile || `${process.env.APPDATA}/kimi-desktop/kimi-agent/conversation-statuses.json`
     this.kimiCode = new KimiCodeConnector(home, () => this.scheduleNotify())
+    this.workBuddy = new WorkBuddyConnector(workbuddyDb, () => this.scheduleNotify(), backupDirectory)
     this.connectors = [
       this.kimiCode,
-      new WorkBuddyConnector(workbuddyDb, () => this.scheduleNotify()),
+      this.workBuddy,
       new KimiWorkConnector(workFile, () => this.scheduleNotify())
     ]
   }
@@ -54,18 +55,11 @@ export class ConnectorHub {
   async emit(): Promise<BoardSnapshot> {
     const settings = this.getSettings()
     const tasks = this.connectors.flatMap(connector => connector.getTasks())
-      .concat(manualTaskItems(settings.manualTasks))
-      .map(task => {
-        const override = settings.overrides[task.key]
-        return {
-          ...task,
-          title: settings.aliases[task.key]?.trim() || task.title,
-          archived: settings.archived[task.key] ?? task.archived,
-          manualOverride: override,
-          light: override ?? task.light,
-          reason: override ? `手动设置为${override === 'red' ? '需处理' : override === 'yellow' ? '进行中' : '空闲'}` : task.reason
-        }
-      })
+      .map(task => ({
+        ...task,
+        title: task.platform === 'kimi-work' ? settings.aliases[task.key]?.trim() || task.title : task.title,
+        focused: Boolean(settings.focused[task.key])
+      }))
       .map(task => reconcileHeartbeat(task, Date.now()))
       .sort(compareTasks)
     this.lastSnapshot = {
@@ -75,6 +69,19 @@ export class ConnectorHub {
     }
     for (const listener of this.listeners) listener(this.lastSnapshot)
     return this.lastSnapshot
+  }
+
+  async renameTask(key: string, title: string) {
+    if (key.startsWith('kimi-code:')) await this.kimiCode.rename(key.slice(10), title)
+    else if (key.startsWith('workbuddy:')) await this.workBuddy.rename(key.slice(10), title)
+    else if (key.startsWith('kimi-work:')) return
+    else throw new Error('该平台不支持重命名')
+  }
+
+  async setArchived(key: string, archived: boolean) {
+    if (key.startsWith('kimi-code:')) await this.kimiCode.setArchived(key.slice(10), archived)
+    else if (key.startsWith('workbuddy:')) await this.workBuddy.setArchived(key.slice(10), archived)
+    else throw new Error('该平台不支持归档')
   }
 
   getSnapshot() { return this.lastSnapshot }

@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
-import { existsSync, watch, type FSWatcher } from 'node:fs'
-import { dirname } from 'node:path'
+import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { mapNativeStatus } from '../../shared/status.ts'
 import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
 
@@ -15,7 +15,7 @@ export class WorkBuddyConnector {
   private watcher?: FSWatcher
   private refreshTimer?: NodeJS.Timeout
 
-  constructor(private readonly dbPath: string, private readonly notify: () => void) {}
+  constructor(private readonly dbPath: string, private readonly notify: () => void, private readonly backupDirectory: string) {}
 
   async start() {
     await this.refresh()
@@ -50,6 +50,45 @@ export class WorkBuddyConnector {
       this.health = { platform: 'workbuddy', connected: false, detail: `读取失败：${error instanceof Error ? error.message : String(error)}`, stale: true }
     }
     this.notify()
+  }
+
+  private async backup() {
+    if (!this.db) throw new Error('WorkBuddy 数据库尚未连接')
+    mkdirSync(this.backupDirectory, { recursive: true })
+    await this.db.backup(join(this.backupDirectory, `workbuddy-${Date.now()}.db`))
+  }
+
+  async rename(id: string, title: string) {
+    if (!title.trim() || title.length > 200) throw new Error('标题不能为空且不能超过 200 字')
+    await this.backup()
+    const db = new Database(this.dbPath)
+    try {
+      db.transaction(() => {
+        const result = db.prepare('UPDATE sessions SET title = ?, custom_title = ?, updated_at = ? WHERE id = ?').run(title.trim(), title.trim(), Date.now(), id)
+        if (result.changes !== 1) throw new Error('未找到要重命名的 WorkBuddy 会话')
+        const row = db.prepare('SELECT title, custom_title FROM sessions WHERE id = ?').get(id) as { title?: string; custom_title?: string }
+        if (row.title !== title.trim() || row.custom_title !== title.trim()) throw new Error('WorkBuddy 重命名回读校验失败')
+      })()
+    } finally { db.close() }
+    await this.refresh()
+  }
+
+  async setArchived(id: string, archived: boolean) {
+    await this.backup()
+    const db = new Database(this.dbPath)
+    try {
+      db.transaction(() => {
+        const current = db.prepare('SELECT status FROM sessions WHERE id = ?').get(id) as { status?: string } | undefined
+        if (!current?.status) throw new Error('未找到要归档的 WorkBuddy 会话')
+        if (archived && !['active', 'completed', 'idle', 'archived'].includes(current.status)) throw new Error('进行中的会话请先等待完成，再归档')
+        const next = archived ? 'archived' : 'completed'
+        const result = db.prepare('UPDATE sessions SET status = ?, updated_at = ? WHERE id = ?').run(next, Date.now(), id)
+        if (result.changes !== 1) throw new Error('WorkBuddy 归档状态更新失败')
+        const row = db.prepare('SELECT status FROM sessions WHERE id = ?').get(id) as { status?: string }
+        if (row.status !== next) throw new Error('WorkBuddy 归档回读校验失败')
+      })()
+    } finally { db.close() }
+    await this.refresh()
   }
 
   getTasks() { return this.tasks }

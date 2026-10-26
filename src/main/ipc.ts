@@ -1,6 +1,5 @@
 import { ipcMain } from 'electron'
-import { randomUUID } from 'node:crypto'
-import type { Light, Settings } from '../shared/types.ts'
+import type { Settings } from '../shared/types.ts'
 import type { ConnectorHub } from './connectors/index.ts'
 import type { BoardWindow } from './window.ts'
 import { openTask } from './open-target.ts'
@@ -21,44 +20,34 @@ export function registerIpc(context: IpcContext) {
   ipcMain.handle('settings:get', () => getSettings())
   ipcMain.handle('settings:update', (event, patch: Partial<Settings>) => {
     const allowed: Partial<Settings> = {}
-    for (const key of ['opacity', 'alwaysOnTop', 'clickThrough', 'autoStart', 'kimiCodeHome', 'workbuddyDb', 'kimiWorkStatusFile'] as const) {
+    for (const key of ['opacity', 'alwaysOnTop', 'clickThrough', 'autoStart', 'theme', 'kimiCodeOpenTarget', 'kimiCodeHome', 'workbuddyDb', 'kimiWorkStatusFile'] as const) {
       if (key in patch) Object.assign(allowed, { [key]: patch[key] })
     }
     return updateSettings(allowed)
   })
-  ipcMain.handle('task:rename', (event, key: string, title: string) => {
-    if (typeof key !== 'string' || typeof title !== 'string' || !title.trim() || title.length > 200) throw new Error('标题不能为空且不能超过 200 字。')
-    return updateSettings({ aliases: { ...getSettings().aliases, [key]: title.trim() } })
+  ipcMain.handle('task:rename', async (event, key: string, title: string) => {
+    if (typeof title !== 'string' || !title.trim() || title.length > 200) return { ok: false, message: '标题不能为空且不能超过 200 字。' }
+    if (key.startsWith('kimi-work:')) {
+      updateSettings({ aliases: { ...getSettings().aliases, [key]: title.trim() } })
+      return { ok: true, message: '看板别名已更新，不会影响 Kimi Work 原会话标题。' }
+    }
+    await hub.renameTask(key, title.trim())
+    return { ok: true, message: '已在看板和原平台同步重命名。' }
   })
-  ipcMain.handle('task:archive', (event, key: string, archived: boolean) => {
-    return updateSettings({ archived: { ...getSettings().archived, [key]: Boolean(archived) } })
+  ipcMain.handle('task:archive', async (event, key: string, archived: boolean) => {
+    await hub.setArchived(key, archived)
+    return { ok: true, message: archived ? '已在原平台归档。' : '已在原平台恢复。' }
   })
-  ipcMain.handle('task:override', (event, key: string, light?: Light) => {
-    const overrides = { ...getSettings().overrides }
-    if (light) overrides[key] = light
-    else delete overrides[key]
-    return updateSettings({ overrides })
-  })
-  ipcMain.handle('manual:add', (event, title: string, url: string) => {
-    if (!title?.trim() || title.length > 200) throw new Error('标题不能为空且不能超过 200 字。')
-    const parsed = new URL(url)
-    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('仅支持 http/https 链接。')
-    const manualTasks = [...getSettings().manualTasks, { id: randomUUID(), title: title.trim(), url: parsed.toString(), light: 'green' as const }]
-    return updateSettings({ manualTasks })
-  })
-  ipcMain.handle('manual:remove', (event, id: string) => {
-    const settings = getSettings()
-    const manualTasks = settings.manualTasks.filter(task => task.id !== id)
-    const aliases = { ...settings.aliases }
-    const overrides = { ...settings.overrides }
-    delete aliases[`manual:${id}`]
-    delete overrides[`manual:${id}`]
-    return updateSettings({ manualTasks, aliases, overrides })
+  ipcMain.handle('task:toggle-focus', (event, key: string) => {
+    const focused = { ...getSettings().focused }
+    if (focused[key]) delete focused[key]
+    else focused[key] = true
+    return updateSettings({ focused })
   })
   ipcMain.handle('task:open', async (event, key: string) => {
     const task = hub.getTask(key)
     if (!task) return { ok: false, message: '任务已不存在，请刷新后重试。' }
-    return openTask(task)
+    return openTask(task, getSettings().kimiCodeOpenTarget)
   })
   ipcMain.handle('kimi:install-hooks', () => context.installHooks())
   ipcMain.handle('window:toggle-click-through', () => board.toggleClickThrough())

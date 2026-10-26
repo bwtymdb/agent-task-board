@@ -17,6 +17,7 @@ export function reconcileHeartbeat(item: TaskItem, now: number) {
 
 export function mapNativeStatus(platform: Platform, status: string): { light: Light; reason: string } {
   const value = status.toLowerCase()
+  if (platform === 'workbuddy' && value === 'active') return { light: 'green', reason: '本轮完成 / 空闲' }
   if (['creating', 'planning', 'working', 'running', 'in_progress', 'busy'].includes(value)) {
     return { light: 'yellow', reason: '进行中' }
   }

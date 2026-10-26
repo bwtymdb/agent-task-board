@@ -8,10 +8,12 @@ export const defaultSettings: Settings = {
   clickThrough: false,
   autoStart: false,
   dockEdge: null,
+  theme: 'midnight',
+  focused: {},
+  kimiCodeOpenTarget: 'desktop',
   aliases: {},
   archived: {},
-  overrides: {},
-  manualTasks: []
+  overrides: {}
 }
 
 export class LocalStore {
@@ -42,10 +44,12 @@ export class LocalStore {
     return {
       ...settings,
       opacity: Math.min(1, Math.max(0.3, Number(settings.opacity) || 0.9)),
+      theme: settings.theme || 'midnight',
+      focused: settings.focused ?? {},
+      kimiCodeOpenTarget: settings.kimiCodeOpenTarget || 'desktop',
       aliases: settings.aliases ?? {},
       archived: settings.archived ?? {},
-      overrides: settings.overrides ?? {},
-      manualTasks: Array.isArray(settings.manualTasks) ? settings.manualTasks : []
+      overrides: settings.overrides ?? {}
     }
   }
 

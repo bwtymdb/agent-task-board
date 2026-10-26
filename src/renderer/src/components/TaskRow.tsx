@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Light, TaskItem } from '../../../shared/types.ts'
 
-const platformNames = { 'kimi-code': 'Kimi Code', workbuddy: 'WorkBuddy', 'kimi-work': 'Kimi Work', manual: '手动' }
+const platformNames = { 'kimi-code': 'Kimi Code', workbuddy: 'WorkBuddy', 'kimi-work': 'Kimi Work' }
 const lightNames = { red: '需处理', yellow: '进行中', green: '空闲' }
 
 function relativeTime(timestamp: number) {
@@ -14,22 +14,23 @@ function relativeTime(timestamp: number) {
 
 type Props = {
   task: TaskItem
+  expanded: boolean
+  onToggle: () => void
   onOpen: () => void
   onRename: (title: string) => void
   onArchive: () => void
-  onOverride: (light?: Light) => void
-  onRemove: () => void
+  onFocus: () => void
 }
 
-export function TaskRow({ task, onOpen, onRename, onArchive, onOverride, onRemove }: Props) {
-  const [expanded, setExpanded] = useState(false)
+export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive, onFocus }: Props) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(task.title)
   const directory = task.cwd?.replaceAll('\\', '/').split('/').filter(Boolean).at(-1)
-  return <article className={`task-row ${task.light} ${task.stale ? 'stale' : ''}`}>
+  return <article className={`task-row ${task.light} ${task.stale ? 'stale' : ''}`} data-task-key={task.key}>
     <div className="task-main">
-      <div className="task-select" role="button" tabIndex={0} onClick={() => setExpanded(value => !value)} onKeyDown={event => {
-        if (event.key === 'Enter' || event.key === ' ') setExpanded(value => !value)
+      <button className={`focus-button ${task.focused ? 'focused' : ''}`} title={task.focused ? '移出重点监控' : '加入重点监控'} aria-label={task.focused ? '移出重点监控' : '加入重点监控'} onClick={onFocus}>★</button>
+      <div className="task-select" role="button" tabIndex={0} title="双击打开会话" onDoubleClick={onOpen} onClick={onToggle} onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') onToggle()
       }} aria-expanded={expanded}>
         <span className="task-topline">
           <span className={`platform-badge ${task.platform}`}>{platformNames[task.platform]}</span>
@@ -52,15 +53,9 @@ export function TaskRow({ task, onOpen, onRename, onArchive, onOverride, onRemov
       </div>
     </div>
     {expanded && <div className="task-actions">
-      <button className="action-primary" onClick={onOpen}>{task.platform === 'kimi-code' ? '打开原对话' : task.platform === 'manual' ? '打开链接' : '打开平台'}</button>
-      <button onClick={() => { setTitle(task.title); setEditing(true) }}>重命名</button>
-      <button onClick={onArchive}>{task.archived ? '移出归档' : '归档'}</button>
-      <div className="override-actions">
-        <span>状态</span>
-        {(['red', 'yellow', 'green'] as Light[]).map(light => <button key={light} className={task.manualOverride === light ? 'selected' : ''} onClick={() => onOverride(light)}>{lightNames[light]}</button>)}
-        {task.manualOverride && <button onClick={() => onOverride(undefined)}>恢复自动</button>}
-      </div>
-      {task.platform === 'manual' && <button className="danger-link" onClick={onRemove}>删除手动任务</button>}
+      <button className="action-primary" onClick={onOpen}>{task.platform === 'kimi-work' ? '打开平台' : '打开原对话'}</button>
+      <button onClick={() => { setTitle(task.title); setEditing(true) }}>{task.platform === 'kimi-work' ? '看板别名' : '同步重命名'}</button>
+      {task.platform !== 'kimi-work' && <button className={`archive-button ${task.archived ? 'archived' : ''}`} onClick={onArchive}>{task.archived ? '取消归档' : '平台归档'}</button>}
     </div>}
   </article>
 }

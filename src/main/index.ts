@@ -25,7 +25,7 @@ else {
       if (patch.autoStart !== undefined) app.setLoginItemSettings({ openAtLogin: settings.autoStart })
       return settings
     }
-    hub = new ConnectorHub(() => settings)
+    hub = new ConnectorHub(() => settings, join(app.getPath('userData'), 'backups'))
     const onSettings = (next: Settings) => {
       settings = next
       board?.broadcast('settings:changed', next)
@@ -46,7 +46,10 @@ else {
         join(app.getPath('userData'), 'hook-connection.json')
       )
     })
-    hub.subscribe(snapshot => board?.broadcast('snapshot:changed', snapshot))
+    hub.subscribe(snapshot => {
+      board?.broadcast('snapshot:changed', snapshot)
+      board?.updateDockTasks(snapshot.tasks)
+    })
     await hub.start()
 
     const iconPath = app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(process.cwd(), 'resources', 'icon.png')
