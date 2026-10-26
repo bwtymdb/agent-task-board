@@ -1,0 +1,66 @@
+name: 问题报告
+description: 报告看板、平台连接器或 Windows 窗口行为问题
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请不要附上真实账号、Cookie、令牌、会话导出、Hook 连接文件或未脱敏的本地设置。安全漏洞请改用私密漏洞报告。
+  - type: input
+    id: version
+    attributes:
+      label: 看板版本
+      placeholder: 例如 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 问题涉及的平台
+      options:
+        - Kimi Code
+        - WorkBuddy
+        - Kimi Work
+        - 看板窗口或设置
+        - 安装包
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      description: Windows 版本、DPI、显示器数量、相关客户端版本和安装方式。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 可附脱敏截图或错误文本，不要上传真实会话内容。
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 我已移除账号、令牌、真实会话标题中的敏感内容和本地凭据。
+          required: true

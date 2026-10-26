@@ -1,0 +1,27 @@
+appId: local.agenttaskboard
+productName: AI任务看板
+directories:
+  output: release
+files:
+  - out/**
+asarUnpack:
+  - node_modules/better_sqlite3/**
+extraResources:
+  - from: resources/hook-reporter.cjs
+    to: hook-reporter.cjs
+  - from: resources/icon.png
+    to: icon.png
+win:
+  icon: resources/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: AgentTaskBoard-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI任务看板
+npmRebuild: true

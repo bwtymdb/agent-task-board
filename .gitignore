@@ -1,0 +1,10 @@
+node_modules/
+out/
+release/
+.tmp-store/
+*.log
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
