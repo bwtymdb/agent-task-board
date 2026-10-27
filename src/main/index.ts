@@ -55,6 +55,7 @@ else {
     const iconPath = app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(process.cwd(), 'resources', 'icon.png')
     tray = new Tray(nativeImage.createFromPath(iconPath))
     tray.setToolTip('AI 任务看板 · Ctrl+Alt+Space 切换穿透')
+    tray.on('click', () => board?.show())
     const rebuildTray = () => tray?.setContextMenu(Menu.buildFromTemplate([
       { label: '打开看板', click: () => board?.show() },
       { label: settings.clickThrough ? '关闭鼠标穿透' : '开启鼠标穿透', click: () => { board?.toggleClickThrough(); rebuildTray() } },
