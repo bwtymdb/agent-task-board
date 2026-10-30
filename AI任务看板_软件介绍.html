@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI 任务看板：在 Windows 桌面上集中监控 WorkBuddy、Kimi Code 和 Kimi Work 的任务状态。下载 v0.1.1 安装包。">
+  <title>AI 任务看板｜让每个任务都有明确状态</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffffff'/%3E%3Ccircle cx='16' cy='32' r='7' fill='%23c75650'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23c98b27'/%3E%3Ccircle cx='48' cy='32' r='7' fill='%23237a57'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f7f5;
+      --surface: #ffffff;
+      --ink: #17221c;
+      --muted: #647169;
+      --line: #d9e2dc;
+      --green: #237a57;
+      --green-soft: #e2f1e9;
+      --amber: #c98b27;
+      --red: #c75650;
+      --shadow: 0 28px 70px rgba(29, 55, 40, .13);
+      font-family: "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); line-height: 1.7; }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a:focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+    .wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 84px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 750; letter-spacing: .02em; }
+    .brand-mark { display: inline-flex; gap: 4px; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+    .dot.red { background: var(--red); }
+    .dot.yellow { background: var(--amber); }
+    .dot.green { background: var(--green); }
+    .repo-link { color: var(--muted); font-size: 14px; text-decoration: none; }
+    .repo-link:hover { color: var(--green); }
+    .hero { display: grid; grid-template-columns: .94fr 1.06fr; align-items: center; gap: clamp(40px, 7vw, 88px); padding-block: 64px 96px; }
+    .eyebrow { margin: 0 0 20px; color: var(--green); font-size: 13px; font-weight: 750; letter-spacing: .16em; }
+    h1 { max-width: 600px; margin: 0; font-size: clamp(38px, 4.8vw, 64px); line-height: 1.16; letter-spacing: -.045em; }
+    .hero-copy { max-width: 510px; margin: 26px 0 0; color: var(--muted); font-size: 17px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 32px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 12px 22px; border: 1px solid var(--green); border-radius: 9px; font-weight: 700; text-decoration: none; }
+    .button-primary { color: #fff; background: var(--green); box-shadow: 0 8px 22px rgba(35, 122, 87, .18); }
+    .button-primary:hover { background: #1c6849; }
+    .button-secondary { color: var(--green); background: transparent; }
+    .button-secondary:hover { background: var(--green-soft); }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 22px; color: var(--muted); font-size: 12px; }
+    .meta span::before { content: "·"; margin-right: 8px; color: var(--green); }
+    .desktop { position: relative; padding: 34px 24px 30px; border: 1px solid #d4dfd8; border-radius: 24px; background-color: #e5ede8; background-image: linear-gradient(#d8e3dc 1px, transparent 1px), linear-gradient(90deg, #d8e3dc 1px, transparent 1px); background-size: 28px 28px; box-shadow: var(--shadow); transform: rotate(1.2deg); }
+    .board { overflow: hidden; border: 1px solid rgba(23, 34, 28, .1); border-radius: 14px; background: rgba(255, 255, 255, .96); transform: rotate(-1.2deg); }
+    .board-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+    .board-title { font-size: 14px; font-weight: 750; }
+    .board-caption { color: var(--muted); font-size: 9px; letter-spacing: .12em; }
+    .board-tabs { display: flex; gap: 18px; padding: 12px 18px; color: var(--muted); font-size: 11px; }
+    .board-tabs strong { color: var(--green); }
+    .task { display: grid; grid-template-columns: 7px 1fr auto; gap: 12px; align-items: center; margin: 0 12px 10px; padding: 15px 12px; border: 1px solid #e4eae6; border-radius: 9px; background: #fff; }
+    .task-line { align-self: stretch; border-radius: 4px; background: var(--green); }
+    .task.warning .task-line { background: var(--amber); }
+    .task.alert .task-line { background: var(--red); }
+    .task-name { margin: 0; font-size: 12px; font-weight: 700; }
+    .task-platform { margin: 3px 0 0; color: var(--muted); font-size: 9px; }
+    .task-state { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 10px; }
+    .task-state .dot { width: 7px; height: 7px; }
+    .board-foot { padding: 10px 18px; color: var(--muted); font-size: 9px; text-align: right; }
+    .floating-note { position: absolute; right: -18px; bottom: -22px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: 0 12px 30px rgba(29, 55, 40, .12); font-size: 12px; font-weight: 700; transform: rotate(-2deg); }
+    section { padding-block: 76px; }
+    .section-heading { display: grid; grid-template-columns: .7fr 1.3fr; gap: 48px; align-items: start; margin-bottom: 36px; }
+    h2 { margin: 0; font-size: clamp(26px, 3vw, 38px); line-height: 1.3; letter-spacing: -.025em; }
+    .section-intro { max-width: 620px; margin: 0; color: var(--muted); }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+    .feature { min-height: 190px; padding: 26px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(255,255,255,.44); }
+    .feature h3 { margin: 16px 0 8px; font-size: 17px; }
+    .feature p { margin: 0; color: var(--muted); font-size: 14px; }
+    .feature-label { color: var(--green); font-family: Consolas, monospace; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+    .status-guide { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .status-card { padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+    .status-card h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 17px; }
+    .status-card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .note { margin: 20px 0 0; padding-left: 16px; border-left: 3px solid var(--amber); color: var(--muted); font-size: 14px; }
+    .install { background: var(--ink); color: #f4f7f5; }
+    .install .section-intro { color: #b9c6bd; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; counter-reset: install; }
+    .step { counter-increment: install; padding-top: 20px; border-top: 1px solid #405148; }
+    .step::before { content: "0" counter(install); display: block; margin-bottom: 24px; color: #83c4a4; font-family: Consolas, monospace; font-size: 13px; }
+    .step h3 { margin: 0 0 8px; font-size: 17px; }
+    .step p { margin: 0; color: #b9c6bd; font-size: 14px; }
+    .install-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 40px; }
+    .install .button-primary { border-color: #83c4a4; color: var(--ink); background: #83c4a4; box-shadow: none; }
+    .install .button-primary:hover { background: #a2d8bb; }
+    .install-note { max-width: 580px; color: #b9c6bd; font-size: 12px; }
+    .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 60px; }
+    .faq h3 { margin: 0 0 8px; font-size: 16px; }
+    .faq p { margin: 0; color: var(--muted); font-size: 14px; }
+    footer { padding-block: 30px 40px; border-top: 1px solid var(--line); }
+    .footer-inner { display: flex; justify-content: space-between; gap: 24px; color: var(--muted); font-size: 12px; }
+    .footer-inner a { color: var(--green); }
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; padding-block: 42px 72px; }
+      .hero-copy { max-width: 650px; }
+      .desktop { width: min(540px, 96%); margin-inline: auto; }
+      .section-heading { grid-template-columns: 1fr; gap: 16px; }
+      .features { grid-template-columns: repeat(2, 1fr); }
+      .status-guide, .steps { grid-template-columns: 1fr; }
+      .step { display: grid; grid-template-columns: 46px 1fr; column-gap: 12px; }
+      .step::before { grid-row: 1 / 3; margin: 0; }
+      .step h3 { margin-top: 0; }
+    }
+    @media (max-width: 520px) {
+      .wrap { width: min(100% - 30px, 1120px); }
+      .topbar { min-height: 72px; }
+      .repo-link { font-size: 12px; }
+      h1 { font-size: 38px; }
+      .actions { align-items: stretch; flex-direction: column; }
+      .button { width: 100%; }
+      .desktop { padding: 22px 12px; border-radius: 18px; }
+      .floating-note { right: -4px; }
+      .features, .faq { grid-template-columns: 1fr; }
+      .feature { min-height: 0; }
+      section { padding-block: 56px; }
+      .footer-inner { flex-direction: column; gap: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><i class="dot red"></i><i class="dot yellow"></i><i class="dot green"></i></span>AI 任务看板</div>
+    <a class="repo-link" href="https://github.com/bwtymdb/agent-task-board" target="_blank" rel="noopener noreferrer">GitHub 开源仓库 ↗</a>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <div>
+        <p class="eyebrow">WINDOWS · 本地任务监控</p>
+        <h1>把每个 AI 任务，<br>放在一盏灯下。</h1>
+        <p class="hero-copy">同时使用 WorkBuddy、Kimi Code 和 Kimi Work，不必逐个平台检查。任务是否运行、是否完成、是否需要处理，在一块桌面看板里看清。</p>
+        <div class="actions">
+          <a class="button button-primary" href="https://github.com/bwtymdb/agent-task-board/releases/latest/download/AgentTaskBoard-Setup-0.1.1.exe">下载 Windows 安装包 <span aria-hidden="true">&nbsp;↓</span></a>
+          <a class="button button-secondary" href="#install">查看安装方法</a>
+        </div>
+        <div class="meta"><span>v0.1.1</span><span>Windows 10 / 11 x64</span><span>约 125 MB</span><span>MIT 开源</span></div>
+      </div>
+
+      <div class="desktop" role="img" aria-label="任务看板界面示意：三个任务分别显示空闲、进行中和需处理状态">
+        <div class="board">
+          <div class="board-head">
+            <div><div class="board-title">任务看板</div><div class="board-caption">AI WORK CONTROL</div></div>
+            <span class="brand-mark" aria-hidden="true"><i class="dot red"></i><i class="dot yellow"></i><i class="dot green"></i></span>
+          </div>
+          <div class="board-tabs"><strong>重点监控</strong><span>全部对话</span><span>归档会话</span></div>
+          <div class="task">
+            <i class="task-line"></i>
+            <div><p class="task-name">整理项目技术方案</p><p class="task-platform">WorkBuddy · 本轮完成 / 空闲</p></div>
+            <span class="task-state"><i class="dot green"></i>空闲</span>
+          </div>
+          <div class="task warning">
+            <i class="task-line"></i>
+            <div><p class="task-name">Windows 多平台任务看板</p><p class="task-platform">Kimi Code · 正在执行</p></div>
+            <span class="task-state"><i class="dot yellow"></i>进行中</span>
+          </div>
+          <div class="task alert">
+            <i class="task-line"></i>
+            <div><p class="task-name">检查房屋面积测算结果</p><p class="task-platform">Kimi Work · 等待确认</p></div>
+            <span class="task-state"><i class="dot red"></i>需处理</span>
+          </div>
+          <div class="board-foot">平台状态 · 自动更新</div>
+        </div>
+        <div class="floating-note"><i class="dot green"></i> 任务完成，声音提醒</div>
+      </div>
+    </div>
+
+    <section class="wrap" aria-labelledby="features-title">
+      <div class="section-heading">
+        <h2 id="features-title">少切换平台，<br>多掌握进展。</h2>
+        <p class="section-intro">看板直接读取这台电脑上的会话状态。把正在推进的工作加上星标，就能持续关注；其他历史对话仍可在完整列表中查找。</p>
+      </div>
+      <div class="features">
+        <article class="feature"><span class="feature-label">01 / 聚合</span><h3>三个平台，一处查看</h3><p>集中显示 WorkBuddy、Kimi Code、Kimi Work 的本机会话，不再逐个打开平台找任务。</p></article>
+        <article class="feature"><span class="feature-label">02 / 重点</span><h3>星标决定关注对象</h3><p>当前工作加入重点监控；暂时收起的会话进入归档，两种用途互不混淆。</p></article>
+        <article class="feature"><span class="feature-label">03 / 提醒</span><h3>完成与异常，声音不同</h3><p>黄灯变绿灯播放柔和双音，黄灯变红灯播放警示音。初次加载不会集中发声。</p></article>
+        <article class="feature"><span class="feature-label">04 / 操作</span><h3>从看板回到工作</h3><p>支持打开原对话、同步重命名和平台归档。Kimi Code 后台任务也可按需停止。</p></article>
+        <article class="feature"><span class="feature-label">05 / 桌面</span><h3>可见，也可以不打扰</h3><p>支持窗口置顶、透明度调节、鼠标穿透、屏幕边缘缩略区和系统托盘。</p></article>
+        <article class="feature"><span class="feature-label">06 / 本地</span><h3>会话内容留在本机</h3><p>不需要注册看板账号，不上传对话正文，不包含遥测。平台升级导致的数据变化会明确提示。</p></article>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="status-title">
+      <div class="section-heading">
+        <h2 id="status-title">三盏灯，<br>各自只表示一件事。</h2>
+        <p class="section-intro">颜色来自平台真实状态，不能手工改灯。这样看到的“进行中”，不会只是自己随手做的标记。</p>
+      </div>
+      <div class="status-guide">
+        <article class="status-card"><h3><i class="dot red"></i>红灯 · 需要处理</h3><p>等待权限确认、等待回答问题、执行失败，或平台状态需要人工介入。</p></article>
+        <article class="status-card"><h3><i class="dot yellow"></i>黄灯 · 正在执行</h3><p>平台正在生成回复、运行工具，或仍有其他后台任务在执行。</p></article>
+        <article class="status-card"><h3><i class="dot green"></i>绿灯 · 本轮完成</h3><p>当前这一轮已经结束，会话处于空闲状态，可以检查结果或继续提问。</p></article>
+      </div>
+      <p class="note"><strong>注意：</strong>绿灯表示“这一轮结束”，不代表整个项目已经全部完成。</p>
+    </section>
+
+    <section class="install" id="install" aria-labelledby="install-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <h2 id="install-title">三步开始使用。</h2>
+          <p class="section-intro">看板本身不需要登录。请确保电脑上已经安装并登录需要监控的 WorkBuddy、Kimi Code 或 Kimi Work。</p>
+        </div>
+        <div class="steps">
+          <article class="step"><h3>下载安装包</h3><p>点击本页下载按钮，获得 AgentTaskBoard-Setup-0.1.1.exe，无需下载整个源码目录。</p></article>
+          <article class="step"><h3>双击完成安装</h3><p>按照安装向导操作。安装包未购买代码签名证书，Windows 可能提示“未知发布者”。</p></article>
+          <article class="step"><h3>从开始菜单启动</h3><p>按 Windows 键，搜索“AI任务看板”并打开。以后也可单击右下角托盘图标显示主界面。</p></article>
+        </div>
+        <div class="install-actions">
+          <a class="button button-primary" href="https://github.com/bwtymdb/agent-task-board/releases/latest/download/AgentTaskBoard-Setup-0.1.1.exe">下载 v0.1.1 <span aria-hidden="true">&nbsp;↓</span></a>
+          <p class="install-note">如果 SmartScreen 拦截，请先核对下载地址确实来自 github.com/bwtymdb/agent-task-board，再选择“更多信息”并确认是否运行。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="questions-title">
+      <div class="section-heading"><h2 id="questions-title">使用前，<br>还需要知道这些。</h2></div>
+      <div class="faq">
+        <article><h3>能在手机或其他电脑上同步吗？</h3><p>当前版本只监控安装看板的这台 Windows 电脑，不同步手机、其他电脑或云端账号的全部会话。</p></article>
+        <article><h3>三个平台的能力完全一样吗？</h3><p>不完全一样。Kimi Work 当前仅纳入 Work Agent 会话，支持看板别名和打开平台，不支持平台重命名或归档。</p></article>
+        <article><h3>如何持续看到最重要的工作？</h3><p>在任务左侧点击星标，它会进入“重点监控”。重点任务不会因本轮完成而自动移除，由你决定何时取消关注。</p></article>
+        <article><h3>软件是开源的吗？</h3><p>是。项目采用 MIT 许可证，可在 GitHub 查看源码、更新日志、平台能力矩阵和已知限制。</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>AI 任务看板 v0.1.1 · Windows 桌面工具 · MIT License</span>
+      <span><a href="https://github.com/bwtymdb/agent-task-board" target="_blank" rel="noopener noreferrer">查看源码</a> · <a href="https://github.com/bwtymdb/agent-task-board/releases/tag/v0.1.1" target="_blank" rel="noopener noreferrer">版本说明</a></span>
+    </div>
+  </footer>
+</body>
+</html>
