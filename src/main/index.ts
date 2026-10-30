@@ -7,6 +7,8 @@ import { HookEventServer } from './event-server.ts'
 import { hookInstaller, registerIpc } from './ipc.ts'
 import type { Settings } from '../shared/types.ts'
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
+
 let board: BoardWindow | undefined
 let hub: ConnectorHub | undefined
 let hookServer: HookEventServer | undefined

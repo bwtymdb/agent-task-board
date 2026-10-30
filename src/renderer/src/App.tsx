@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BoardSnapshot, DockState, Light, Settings } from '../../shared/types.ts'
 import { TaskRow } from './components/TaskRow.tsx'
 import { SettingsPanel } from './components/SettingsPanel.tsx'
 import { MiniDock } from './components/MiniDock.tsx'
+import { changedAlertLights } from './status-transitions.ts'
+import { playStatusSound } from './sound.ts'
 
 const emptySnapshot: BoardSnapshot = { tasks: [], health: [], updatedAt: Date.now() }
 
@@ -19,6 +21,7 @@ export default function App() {
   const [message, setMessage] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const [dockState, setDockState] = useState<DockState>({ collapsed: false, edge: null })
+  const previousLights = useRef<ReadonlyMap<string, Light>>(new Map())
 
   useEffect(() => {
     if (!window.board) { setMessage('预加载桥接未就绪，请重启看板。'); return }
@@ -32,6 +35,11 @@ export default function App() {
     const offDock = window.board.onDockState(setDockState)
     return () => { offSnapshot(); offSettings(); offDock() }
   }, [])
+
+  useEffect(() => {
+    for (const light of changedAlertLights(previousLights.current, snapshot.tasks)) playStatusSound(light)
+    previousLights.current = new Map(snapshot.tasks.map(task => [task.key, task.light]))
+  }, [snapshot.tasks])
 
   useEffect(() => { setExpandedKey(null) }, [view, filter, platform, query])
 
