@@ -5,6 +5,7 @@ import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
 import { KimiCodeApi } from './kimi-code-api.ts'
 import { readWireStatus } from './kimi-code-wire.ts'
 import { isOwnBoardCommand } from './board-process.ts'
+import { parseConversation, parseKimiCodeProgress } from '../progress.ts'
 
 type IndexEntry = { sessionId: string; sessionDir: string; workDir?: string }
 type HookPayload = {
@@ -124,6 +125,30 @@ export class KimiCodeConnector {
     }
     this.live.set(key, next)
     this.notify()
+  }
+
+  getProgress(id: string) {
+    const entries = readFileSync(join(this.home, 'session_index.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean)
+      .flatMap(line => { try { return [JSON.parse(line) as IndexEntry] } catch { return [] } })
+    const entry = entries.find(item => item.sessionId === id)
+    const file = entry && join(entry.sessionDir, 'agents', 'main', 'wire.jsonl')
+    if (!file || !existsSync(file)) return { entries: [], notice: '这个会话没有可读取的本地进展记录。' }
+    const records = readFileSync(file, 'utf8').split(/\r?\n/).flatMap(line => {
+      try { return [JSON.parse(line) as Record<string, unknown>] } catch { return [] }
+    })
+    return parseKimiCodeProgress(records)
+  }
+
+  getConversation(id: string) {
+    const entries = readFileSync(join(this.home, 'session_index.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean)
+      .flatMap(line => { try { return [JSON.parse(line) as IndexEntry] } catch { return [] } })
+    const entry = entries.find(item => item.sessionId === id)
+    const file = entry && join(entry.sessionDir, 'agents', 'main', 'wire.jsonl')
+    if (!file || !existsSync(file)) return []
+    const records = readFileSync(file, 'utf8').split(/\r?\n/).flatMap(line => {
+      try { return [JSON.parse(line) as Record<string, unknown>] } catch { return [] }
+    })
+    return parseConversation(records, 'kimi-code')
   }
 
   async rename(id: string, title: string) {

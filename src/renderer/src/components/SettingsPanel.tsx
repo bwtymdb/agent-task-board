@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ConnectorHealth, Settings, ThemeName } from '../../../shared/types.ts'
+import { AiSettings } from './AiSettings.tsx'
 
 const themes: { id: ThemeName; name: string; color: string }[] = [
   { id: 'midnight', name: '午夜', color: '#111820' },
@@ -50,6 +51,8 @@ export function SettingsPanel({ settings, health, onUpdate, onInstallHooks, onCl
       <label className="toggle-row"><span><strong>窗口置顶</strong><small>始终显示在普通窗口上方</small></span><input type="checkbox" checked={settings.alwaysOnTop} onChange={event => onUpdate({ alwaysOnTop: event.target.checked })} /></label>
       <label className="toggle-row"><span><strong>鼠标穿透</strong><small>点击落到下层应用 · Ctrl+Alt+Space 恢复</small></span><input type="checkbox" checked={settings.clickThrough} onChange={event => onUpdate({ clickThrough: event.target.checked })} /></label>
       <label className="toggle-row"><span><strong>开机启动</strong><small>登录 Windows 后启动看板</small></span><input type="checkbox" checked={settings.autoStart} onChange={event => onUpdate({ autoStart: event.target.checked })} /></label>
+
+      <AiSettings />
 
       <h3 className="section-title">平台连接</h3>
       <div className="health-list">

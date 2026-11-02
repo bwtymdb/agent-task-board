@@ -13,7 +13,9 @@ export const defaultSettings: Settings = {
   kimiCodeOpenTarget: 'desktop',
   aliases: {},
   archived: {},
-  overrides: {}
+  overrides: {},
+  aiProvider: 'moonshot',
+  aiModel: ''
 }
 
 export class LocalStore {

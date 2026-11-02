@@ -6,6 +6,8 @@ import { BoardWindow } from './window.ts'
 import { HookEventServer } from './event-server.ts'
 import { hookInstaller, registerIpc } from './ipc.ts'
 import type { Settings } from '../shared/types.ts'
+import { AiService } from './ai-service.ts'
+import { AiSummaryService } from './ai-summary.ts'
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 
@@ -28,6 +30,13 @@ else {
       return settings
     }
     hub = new ConnectorHub(() => settings, join(app.getPath('userData'), 'backups'))
+    const ai = new AiService({
+      credentialPath: join(app.getPath('userData'), 'ai-credentials.json'),
+      catalogPath: app.isPackaged ? join(process.resourcesPath, 'providers.json') : join(process.cwd(), 'resources', 'providers.json'),
+      catalogUrl: 'https://raw.githubusercontent.com/bwtymdb/agent-task-board/main/resources/providers.json',
+      getSettings: () => settings, updateSettings: saveSettings
+    })
+    const aiSummary = new AiSummaryService(ai, hub, join(app.getPath('userData'), 'ai-summaries.json'))
     const onSettings = (next: Settings) => {
       settings = next
       board?.broadcast('settings:changed', next)
@@ -40,7 +49,7 @@ else {
     hookServer = new HookEventServer(hub.kimiCode, join(app.getPath('userData'), 'hook-connection.json'))
     await hookServer.start().catch(error => console.error('Hook server failed:', error instanceof Error ? error.message : error))
     registerIpc({
-      hub, board, getSettings: () => settings,
+      hub, board, ai, aiSummary, getSettings: () => settings,
       updateSettings: patch => board!.update(patch),
       installHooks: hookInstaller(
         hub,

@@ -1,9 +1,11 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 import type { Settings } from '../shared/types.ts'
 import type { ConnectorHub } from './connectors/index.ts'
 import type { BoardWindow } from './window.ts'
 import { openTask } from './open-target.ts'
 import { installKimiCodeHooks } from './kimi-hooks.ts'
+import type { AiService } from './ai-service.ts'
+import type { AiSummaryService } from './ai-summary.ts'
 
 export type IpcContext = {
   hub: ConnectorHub
@@ -11,10 +13,12 @@ export type IpcContext = {
   getSettings: () => Settings
   updateSettings: (patch: Partial<Settings>) => Settings
   installHooks: () => { ok: boolean; message: string }
+  ai: AiService
+  aiSummary: AiSummaryService
 }
 
 export function registerIpc(context: IpcContext) {
-  const { hub, board, getSettings, updateSettings } = context
+  const { hub, board, getSettings, updateSettings, ai, aiSummary } = context
   ipcMain.handle('snapshot:get', () => hub.getSnapshot())
   ipcMain.handle('snapshot:refresh', () => hub.refresh())
   ipcMain.handle('settings:get', () => getSettings())
@@ -48,6 +52,15 @@ export function registerIpc(context: IpcContext) {
     await hub.cancelBackgroundTask(key, taskId)
     return { ok: true, message: '已终止指定的后台任务。' }
   })
+  ipcMain.handle('ai:state', (event, provider?: string) => ai.getState(provider))
+  ipcMain.handle('ai:connect', (event, provider: string, apiKey: string, baseUrl?: string) => ai.connect(provider, apiKey, baseUrl))
+  ipcMain.handle('ai:select-model', (event, provider: string, model: string, baseUrl?: string) => ai.selectModel(provider, model, baseUrl))
+  ipcMain.handle('task:ai-summarize', (event, key: string) => aiSummary.summarize(key))
+  ipcMain.handle('task:progress', (event, key: string) => aiSummary.getCached(key) || hub.getProgress(key))
+  ipcMain.on('task:show-progress', (event, key: string) => {
+    if (hub.getTask(key)) board.openProgress(key)
+  })
+  ipcMain.on('progress:close', event => BrowserWindow.fromWebContents(event.sender)?.close())
   ipcMain.handle('task:open', async (event, key: string) => {
     const task = hub.getTask(key)
     if (!task) return { ok: false, message: '任务已不存在，请刷新后重试。' }

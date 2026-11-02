@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, statSync, watch, type FSWatcher } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { mapNativeStatus } from '../../shared/status.ts'
 import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
+import { parseKimiWorkConversation, parseKimiWorkProgress } from '../progress.ts'
 
 export class KimiWorkConnector {
   readonly platform = 'kimi-work' as const
@@ -45,6 +47,18 @@ export class KimiWorkConnector {
       this.health = { platform: 'kimi-work', connected: false, detail: `读取失败：${error instanceof Error ? error.message : String(error)}`, stale: true }
     }
     this.notify()
+  }
+
+  getProgress(id: string) {
+    const journalPath = join(dirname(this.filePath), 'file-edit-journal.json')
+    if (!existsSync(journalPath)) return { entries: [], notice: '这个平台没有可读取的文件修改记录。' }
+    return parseKimiWorkProgress(JSON.parse(readFileSync(journalPath, 'utf8')) as Record<string, unknown>, id)
+  }
+
+  getConversation(id: string) {
+    const journalPath = join(dirname(this.filePath), 'file-edit-journal.json')
+    if (!existsSync(journalPath)) return []
+    return parseKimiWorkConversation(JSON.parse(readFileSync(journalPath, 'utf8')) as Record<string, unknown>, id)
   }
 
   getTasks() { return this.tasks }

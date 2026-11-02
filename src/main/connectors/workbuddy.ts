@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3'
-import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { mapNativeStatus } from '../../shared/status.ts'
 import type { ConnectorHealth, TaskItem } from '../../shared/types.ts'
+import { parseConversation, parseWorkBuddyProgress } from '../progress.ts'
 
 type Row = { id: string; title: string | null; custom_title: string | null; cwd: string; status: string; updated_at: number; unread: number }
 
@@ -89,6 +90,34 @@ export class WorkBuddyConnector {
       })()
     } finally { db.close() }
     await this.refresh()
+  }
+
+  getProgress(id: string) {
+    const projects = join(dirname(this.dbPath), 'projects')
+    if (!existsSync(projects)) return { entries: [], notice: '这个会话没有可读取的本地进展记录。' }
+    const file = readdirSync(projects, { withFileTypes: true }).flatMap(directory => {
+      const candidate = join(projects, directory.name, `${id}.jsonl`)
+      return directory.isDirectory() && existsSync(candidate) ? [candidate] : []
+    })[0]
+    if (!file) return { entries: [], notice: '这个会话没有可读取的本地进展记录。' }
+    const records = readFileSync(file, 'utf8').split(/\r?\n/).flatMap(line => {
+      try { return [JSON.parse(line) as Record<string, unknown>] } catch { return [] }
+    })
+    return parseWorkBuddyProgress(records)
+  }
+
+  getConversation(id: string) {
+    const projects = join(dirname(this.dbPath), 'projects')
+    if (!existsSync(projects)) return []
+    const file = readdirSync(projects, { withFileTypes: true }).flatMap(directory => {
+      const candidate = join(projects, directory.name, `${id}.jsonl`)
+      return directory.isDirectory() && existsSync(candidate) ? [candidate] : []
+    })[0]
+    if (!file) return []
+    const records = readFileSync(file, 'utf8').split(/\r?\n/).flatMap(line => {
+      try { return [JSON.parse(line) as Record<string, unknown>] } catch { return [] }
+    })
+    return parseConversation(records, 'workbuddy')
   }
 
   getTasks() { return this.tasks }

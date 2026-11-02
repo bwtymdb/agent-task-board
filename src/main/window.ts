@@ -12,6 +12,7 @@ export class BoardWindow {
   private saveTimer?: NodeJS.Timeout
   private dockTimer?: NodeJS.Timeout
   private dockTasks: TaskItem[] = []
+  private progressWindows = new Map<string, BrowserWindow>()
 
   constructor(settings: Settings, private readonly saveSettings: (patch: Partial<Settings>) => Settings, private readonly onSettings: (settings: Settings) => void) {
     this.settings = settings
@@ -87,6 +88,27 @@ export class BoardWindow {
     this.win.focus()
   }
   hide() { this.win.hide() }
+  openProgress(key: string) {
+    const existing = this.progressWindows.get(key)
+    if (existing && !existing.isDestroyed()) { existing.show(); existing.focus(); return }
+    const win = new BrowserWindow({
+      parent: this.win, modal: true, title: '任务进展', width: 760, height: 800,
+      minWidth: 480, minHeight: 400, resizable: true, maximizable: true,
+      autoHideMenuBar: true, show: false, backgroundColor: '#111820',
+      webPreferences: {
+        preload: join(__dirname, '../preload/index.cjs'), contextIsolation: true,
+        nodeIntegration: false, sandbox: true
+      }
+    })
+    this.progressWindows.set(key, win)
+    win.on('closed', () => this.progressWindows.delete(key))
+    win.once('ready-to-show', () => win.show())
+    if (process.env.ELECTRON_RENDERER_URL) {
+      const url = new URL(process.env.ELECTRON_RENDERER_URL)
+      url.searchParams.set('progress', key)
+      void win.loadURL(url.toString())
+    } else void win.loadFile(join(__dirname, '../renderer/index.html'), { query: { progress: key } })
+  }
   broadcast(channel: string, payload: unknown) {
     if (!this.win.isDestroyed()) this.win.webContents.send(channel, payload)
   }

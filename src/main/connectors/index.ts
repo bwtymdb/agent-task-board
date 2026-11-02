@@ -15,6 +15,7 @@ type Connector = {
 export class ConnectorHub {
   readonly kimiCode: KimiCodeConnector
   readonly workBuddy: WorkBuddyConnector
+  readonly kimiWork: KimiWorkConnector
   private readonly connectors: Connector[]
   private readonly listeners = new Set<(snapshot: BoardSnapshot) => void>()
   private notifyTimer?: NodeJS.Timeout
@@ -28,11 +29,8 @@ export class ConnectorHub {
     const workFile = settings.kimiWorkStatusFile || `${process.env.APPDATA}/kimi-desktop/kimi-agent/conversation-statuses.json`
     this.kimiCode = new KimiCodeConnector(home, () => this.scheduleNotify())
     this.workBuddy = new WorkBuddyConnector(workbuddyDb, () => this.scheduleNotify(), backupDirectory)
-    this.connectors = [
-      this.kimiCode,
-      this.workBuddy,
-      new KimiWorkConnector(workFile, () => this.scheduleNotify())
-    ]
+    this.kimiWork = new KimiWorkConnector(workFile, () => this.scheduleNotify())
+    this.connectors = [this.kimiCode, this.workBuddy, this.kimiWork]
   }
 
   async start() {
@@ -87,6 +85,22 @@ export class ConnectorHub {
   async cancelBackgroundTask(key: string, taskId: string) {
     if (!key.startsWith('kimi-code:')) throw new Error('只有 Kimi Code 支持终止后台任务')
     await this.kimiCode.cancelBackgroundTask(key.slice(10), taskId)
+  }
+
+  getProgress(key: string) {
+    if (!this.getTask(key)) throw new Error('任务已不存在，请刷新后重试')
+    if (key.startsWith('kimi-code:')) return this.kimiCode.getProgress(key.slice(10))
+    if (key.startsWith('workbuddy:')) return this.workBuddy.getProgress(key.slice(10))
+    if (key.startsWith('kimi-work:')) return this.kimiWork.getProgress(key.slice(10))
+    throw new Error('该平台不支持进展日志')
+  }
+
+  getConversation(key: string) {
+    if (!this.getTask(key)) throw new Error('任务已不存在，请刷新后重试')
+    if (key.startsWith('kimi-code:')) return this.kimiCode.getConversation(key.slice(10))
+    if (key.startsWith('workbuddy:')) return this.workBuddy.getConversation(key.slice(10))
+    if (key.startsWith('kimi-work:')) return this.kimiWork.getConversation(key.slice(10))
+    throw new Error('该平台不支持会话进展分析')
   }
 
   getSnapshot() { return this.lastSnapshot }

@@ -1,0 +1,19 @@
+[
+  { "id": "kimi-coding", "name": "Kimi 会员 / Coding Plan", "kind": "openai", "baseUrl": "https://api.kimi.com/coding/v1", "docsUrl": "https://www.kimi.com/code/docs/" },
+  { "id": "moonshot", "name": "Kimi 开放平台 / Moonshot", "kind": "openai", "baseUrl": "https://api.moonshot.cn/v1", "docsUrl": "https://platform.kimi.com/docs" },
+  { "id": "deepseek", "name": "DeepSeek", "kind": "openai", "baseUrl": "https://api.deepseek.com/v1", "docsUrl": "https://api-docs.deepseek.com" },
+  { "id": "qwen", "name": "阿里云百炼 / 通义千问", "kind": "openai", "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1", "docsUrl": "https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope" },
+  { "id": "zhipu-coding", "name": "智谱 GLM / Coding Plan", "kind": "openai", "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4", "docsUrl": "https://docs.bigmodel.cn" },
+  { "id": "zhipu", "name": "智谱开放平台 / GLM", "kind": "openai", "baseUrl": "https://open.bigmodel.cn/api/paas/v4", "docsUrl": "https://open.bigmodel.cn/dev/api" },
+  { "id": "volcengine-coding", "name": "火山方舟 / Coding Plan", "kind": "openai", "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3", "docsUrl": "https://www.volcengine.com/article/37229" },
+  { "id": "volcengine", "name": "火山方舟 / 按量 API", "kind": "openai", "baseUrl": "https://ark.cn-beijing.volces.com/api/v3", "docsUrl": "https://www.volcengine.com/docs/ark/compatible-with-openai-sdk" },
+  { "id": "hunyuan", "name": "腾讯混元", "kind": "openai", "baseUrl": "https://api.hunyuan.cloud.tencent.com/v1", "docsUrl": "https://cloud.tencent.com/document/product/1729" },
+  { "id": "qianfan", "name": "百度千帆", "kind": "openai", "baseUrl": "https://qianfan.baidubce.com/v2", "docsUrl": "https://cloud.baidu.com/doc/qianfan" },
+  { "id": "openai", "name": "OpenAI", "kind": "openai", "baseUrl": "https://api.openai.com/v1", "docsUrl": "https://platform.openai.com/docs" },
+  { "id": "anthropic", "name": "Anthropic / Claude", "kind": "anthropic", "baseUrl": "https://api.anthropic.com", "docsUrl": "https://docs.anthropic.com" },
+  { "id": "gemini", "name": "Google Gemini", "kind": "gemini", "baseUrl": "https://generativelanguage.googleapis.com", "docsUrl": "https://ai.google.dev/gemini-api/docs" },
+  { "id": "openrouter", "name": "OpenRouter", "kind": "openai", "baseUrl": "https://openrouter.ai/api/v1", "docsUrl": "https://openrouter.ai/docs" },
+  { "id": "xai", "name": "xAI / Grok", "kind": "openai", "baseUrl": "https://api.x.ai/v1", "docsUrl": "https://docs.x.ai" },
+  { "id": "groq", "name": "Groq", "kind": "openai", "baseUrl": "https://api.groq.com/openai/v1", "docsUrl": "https://console.groq.com/docs" },
+  { "id": "custom", "name": "自定义 OpenAI 兼容接口", "kind": "openai", "baseUrl": "", "docsUrl": "" }
+]

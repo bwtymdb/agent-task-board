@@ -21,12 +21,14 @@ type Props = {
   onArchive: () => void
   onFocus: () => void
   onCancelBackground: (taskId: string) => void
+  onShowProgress: () => void
 }
 
-export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive, onFocus, onCancelBackground }: Props) {
+export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive, onFocus, onCancelBackground, onShowProgress }: Props) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(task.title)
   const directory = task.cwd?.replaceAll('\\', '/').split('/').filter(Boolean).at(-1)
+
   return <article className={`task-row ${task.light} ${task.stale ? 'stale' : ''}`} data-task-key={task.key}>
     <div className="task-main">
       <button className={`focus-button ${task.focused ? 'focused' : ''}`} title={task.focused ? '移出重点监控' : '加入重点监控'} aria-label={task.focused ? '移出重点监控' : '加入重点监控'} onClick={onFocus}>★</button>
@@ -45,7 +47,7 @@ export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive,
             if (event.key === 'Escape') setEditing(false)
           }} />
           <button onClick={() => { if (title.trim()) { onRename(title); setEditing(false) } }}>保存</button>
-        </span> : <strong className="task-title" title={task.title}>{task.title}</strong>}
+        </span> : <span className="task-title-line"><strong className="task-title" title={task.title}>{task.title}</strong><button className="progress-link" onClick={event => { event.stopPropagation(); onShowProgress() }} onDoubleClick={event => event.stopPropagation()}>进展</button></span>}
         <span className="task-reason">{task.reason}{directory ? ` · ${directory}` : ''}</span>
       </div>
       <div className="light-cluster" aria-label={lightNames[task.light]}>

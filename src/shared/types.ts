@@ -3,6 +3,12 @@ export type Light = 'red' | 'yellow' | 'green'
 export type ThemeName = 'midnight' | 'yellow' | 'mint' | 'sky' | 'lavender' | 'rose'
 
 export type BackgroundTask = { id: string; kind: string; description: string; status: string; command?: string }
+export type ProgressEntry = { id: string; timestamp: number | null; summary: string; result?: string; files: string[] }
+export type TaskProgress = { entries: ProgressEntry[]; notice?: string; ai?: { provider: string; model: string; generatedAt: number } }
+export type ConversationTurn = { id: string; timestamp: number | null; user: string; assistant: string; files: string[] }
+export type AiProvider = { id: string; name: string; kind: 'openai' | 'anthropic' | 'gemini'; baseUrl: string; docsUrl?: string }
+export type AiModel = { id: string; name: string }
+export type AiState = { provider: string; model: string; baseUrl?: string; hasKey: boolean; keyHint?: string; providers: AiProvider[]; models: AiModel[] }
 
 export type TaskItem = {
   key: string
@@ -44,6 +50,9 @@ export type Settings = {
   aliases: Record<string, string>
   archived: Record<string, boolean>
   overrides: Record<string, Light>
+  aiProvider: string
+  aiModel: string
+  aiBaseUrl?: string
 }
 
 export type BoardSnapshot = { tasks: TaskItem[]; health: ConnectorHealth[]; updatedAt: number }
@@ -61,6 +70,13 @@ export type BoardApi = {
   toggleFocus: (key: string) => Promise<Settings>
   cancelBackgroundTask: (key: string, taskId: string) => Promise<{ ok: boolean; message: string }>
   openTask: (key: string) => Promise<{ ok: boolean; message: string }>
+  getProgress: (key: string) => Promise<TaskProgress>
+  getAiState: (provider?: string) => Promise<AiState>
+  connectAi: (provider: string, apiKey: string, baseUrl?: string) => Promise<AiState>
+  selectAiModel: (provider: string, model: string, baseUrl?: string) => Promise<AiState>
+  summarizeProgress: (key: string) => Promise<TaskProgress>
+  showProgress: (key: string) => void
+  closeProgress: () => void
   installKimiHooks: () => Promise<{ ok: boolean; message: string }>
   toggleClickThrough: () => Promise<Settings>
   dockWindow: () => void

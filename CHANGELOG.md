@@ -4,6 +4,33 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-02
+
+### 新增
+
+- 已保存的 AI 配置支持随时进入“编辑配置”，可修改厂商、接口地址、API Key 和模型；完成后可收起并再次编辑。
+
+## [0.2.1] - 2026-11-02
+
+### 变更
+
+- Kimi、智谱、火山方舟的 Coding Plan 与开放平台/按量接口拆分，避免会员套餐误用开放平台地址。
+- 设置页持续显示当前厂商、接口地址、模型和脱敏 Key；切换模型后立即显示新模型并确认保存。
+
+## [0.2.0] - 2026-11-02
+
+### 新增
+
+- 支持 Kimi、DeepSeek、通义千问、智谱、火山方舟、混元、千帆、OpenAI、Claude、Gemini、OpenRouter 等厂商及自定义 OpenAI 兼容接口。
+- API Key 使用 Windows 加密保存，模型列表自动读取，厂商目录每日检查更新。
+- 进展窗口可手动生成并缓存 AI 按天摘要；Kimi Code、WorkBuddy 分析真实对话，Kimi Work 分析实际写入文件的内容。
+
+## [0.1.2] - 2026-11-02
+
+### 新增
+
+- 每条任务可打开独立进展窗口，按天查看实际完成结果和修改文件，支持缩放、最大化和 Esc 关闭；Kimi Work 缺少时间信息时明确标记。
+
 ## [0.1.1] - 2026-10-30
 
 ### 新增
@@ -59,5 +86,9 @@
 - Kimi Work 缺少公开完整标题接口时以短 ID 显示，可设置别名。
 - 安装包未购买代码签名证书。
 
+[0.2.2]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.2
+[0.2.1]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.1
+[0.2.0]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.0
+[0.1.2]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.1.0

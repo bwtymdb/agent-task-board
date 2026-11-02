@@ -176,3 +176,66 @@ input, select { background: var(--input, #101820); }
 .archive-button.archived:hover { background: #7e432d; }
 .clear-filter { padding: 3px 7px !important; border: 1px solid var(--line) !important; border-radius: 4px; color: var(--blue) !important; }
 .stop-background { color: #ffb5a9; border-color: #a65d3b !important; background: #593027; }
+.task-title-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.task-title-line .task-title { flex: 1; min-width: 0; }
+.progress-link { flex: 0 0 auto; padding: 1px 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--blue); font-size: 8px; font-weight: 400; }
+.progress-link:hover, .progress-link[aria-expanded='true'] { color: var(--text); background: var(--panel-raised); }
+.progress-panel { max-height: 390px; overflow-y: auto; margin: 0 12px 12px 15px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); user-select: text; }
+.progress-panel::-webkit-scrollbar { width: 5px; }
+.progress-panel::-webkit-scrollbar-thumb { background: #344550; border-radius: 4px; }
+.progress-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.progress-heading strong { font-size: 11px; }
+.progress-heading button { padding: 2px 0; color: var(--blue); font-size: 9px; }
+.progress-day + .progress-day { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--line); }
+.progress-date { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.progress-date strong { color: var(--muted); font-size: 10px; }
+.progress-date span { color: var(--faint); font-size: 8px; }
+.progress-entry { position: relative; margin-left: 3px; padding: 0 0 12px 13px; border-left: 1px solid var(--line); }
+.progress-entry::before { content: ''; position: absolute; left: -3px; top: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+.progress-entry:last-child { padding-bottom: 2px; }
+.progress-entry-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.progress-entry-top strong { font-size: 10px; line-height: 1.65; font-weight: 600; }
+.progress-entry time { flex: 0 0 auto; color: var(--faint); font-family: Consolas, monospace; font-size: 8px; }
+.progress-entry p { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.65; }
+.progress-files { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.progress-files span { padding: 2px 5px; border-radius: 3px; background: var(--panel-raised); color: var(--muted); font-family: Consolas, 'Microsoft YaHei UI', sans-serif; font-size: 8px; }
+.progress-empty, .progress-error, .progress-notice { margin: 0 0 10px; color: var(--muted); font-size: 9px; line-height: 1.7; }
+.progress-error { color: var(--red); }
+.progress-window { height: 100vh; display: flex; flex-direction: column; color: var(--text); background: var(--bg); }
+.progress-window-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 26px; border-bottom: 1px solid var(--line); }
+.progress-window-header h1 { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 20px; line-height: 1.4; }
+.progress-window-header p { margin: 6px 0 0; color: var(--muted); font-size: 11px; }
+.progress-window-header > button { flex: 0 0 auto; padding: 7px 10px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); font-size: 11px; }
+.progress-window-header > button:hover { color: var(--text); background: var(--panel-raised); }
+.progress-window-header > button span { margin-left: 5px; color: var(--faint); font-family: Consolas, monospace; font-size: 9px; }
+.progress-window-body { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 28px 40px; }
+.progress-panel.standalone { max-height: none; overflow: visible; margin: 0; padding: 0; border: 0; background: transparent; }
+.progress-panel.standalone .progress-day + .progress-day { margin-top: 24px; padding-top: 20px; }
+.progress-panel.standalone .progress-date { margin-bottom: 12px; }
+.progress-panel.standalone .progress-date strong { font-size: 13px; }
+.progress-panel.standalone .progress-entry { margin-left: 5px; padding: 0 0 22px 20px; }
+.progress-panel.standalone .progress-entry-top strong { font-size: 14px; line-height: 1.75; }
+.progress-panel.standalone .progress-entry time { font-size: 10px; }
+.progress-panel.standalone .progress-entry p { font-size: 11px; }
+.progress-panel.standalone .progress-files span { font-size: 10px; }
+.progress-panel.standalone .progress-empty, .progress-panel.standalone .progress-error, .progress-panel.standalone .progress-notice { font-size: 12px; }
+.progress-window-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.ai-summary-button { color: var(--blue) !important; border-color: var(--blue) !important; }
+.ai-summary-button:disabled { opacity: .55; cursor: wait; }
+.ai-settings { display: grid; gap: 9px; }
+.ai-settings .section-title { margin-bottom: 1px; }
+.ai-settings label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; }
+.ai-settings input, .ai-settings select { width: 100%; height: 32px; padding: 0 8px; font-size: 10px; user-select: text; }
+.ai-settings .setting-note, .ai-settings .inline-message { margin: 0; }
+.ai-settings .wide-button { margin-top: 0; }
+.ai-connection-status { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.ai-connection-status > i { flex: 0 0 7px; width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--yellow); }
+.ai-connection-status.ready > i { background: var(--green); }
+.ai-connection-status > div { min-width: 0; display: grid; gap: 4px; }
+.ai-connection-status strong { font-size: 11px; }
+.ai-connection-status span, .ai-connection-status code { color: var(--muted); font-size: 8px; line-height: 1.55; word-break: break-all; }
+.ai-connection-status code { font-family: Consolas, monospace; }
+.ai-status-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ai-status-title button { padding: 2px 6px; border: 1px solid var(--line); border-radius: 3px; color: var(--blue); font-size: 8px; }
+.ai-status-title button:hover { color: var(--text); background: var(--panel-raised); }
+.ai-finish-edit { margin: 0; justify-self: end; }
