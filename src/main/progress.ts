@@ -140,13 +140,13 @@ export function parseConversation(records: RecordValue[], kind: 'kimi-code' | 'w
           user: content.replace(/<system-reminder\b[^>]*>[\s\S]*?<\/system-reminder>/gi, '').trim(),
           assistant: '', files: []
         }
-      } else if (role === 'assistant' && current) {
-        current.assistant = [current.assistant, content].filter(Boolean).join('\n')
+      } else if (role === 'assistant' && current && content.trim()) {
+        current.assistant = content
       }
     }
     const part = asRecord(event?.part)
     if (kind === 'kimi-code' && event?.type === 'content.part' && current && typeof part?.text === 'string') {
-      current.assistant = [current.assistant, part.text].filter(Boolean).join('\n')
+      current.assistant = part.text
     }
     const toolCall = (kind === 'kimi-code' && event?.type === 'tool.call') || (kind === 'workbuddy' && record.type === 'function_call')
     const toolName = String(event?.name || record.name || '')

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Light, TaskItem } from '../../../shared/types.ts'
 
-const platformNames = { 'kimi-code': 'Kimi Code', workbuddy: 'WorkBuddy', 'kimi-work': 'Kimi Work' }
+const platformNames = { 'kimi-code': 'Kimi Code', workbuddy: 'WorkBuddy', 'kimi-work': 'Kimi Work', 'deepseek-harness': 'DeepSeek Harness' }
 const lightNames = { red: '需处理', yellow: '进行中', green: '空闲' }
 
 function relativeTime(timestamp: number) {
@@ -56,9 +56,9 @@ export function TaskRow({ task, expanded, onToggle, onOpen, onRename, onArchive,
       </div>
     </div>
     {expanded && <div className="task-actions">
-      <button className="action-primary" onClick={onOpen}>{task.platform === 'kimi-work' ? '打开平台' : '打开原对话'}</button>
-      <button onClick={() => { setTitle(task.title); setEditing(true) }}>{task.platform === 'kimi-work' ? '看板别名' : '同步重命名'}</button>
-      {task.platform !== 'kimi-work' && <button className={`archive-button ${task.archived ? 'archived' : ''}`} onClick={onArchive}>{task.archived ? '取消归档' : '平台归档'}</button>}
+      <button className="action-primary" onClick={onOpen}>{['kimi-work', 'deepseek-harness'].includes(task.platform) ? '打开平台' : '打开原对话'}</button>
+      <button onClick={() => { setTitle(task.title); setEditing(true) }}>{['kimi-work', 'deepseek-harness'].includes(task.platform) ? '看板别名' : '同步重命名'}</button>
+      {!['kimi-work', 'deepseek-harness'].includes(task.platform) && <button className={`archive-button ${task.archived ? 'archived' : ''}`} onClick={onArchive}>{task.archived ? '取消归档' : '平台归档'}</button>}
       {task.platform === 'kimi-code' && (task.backgroundTasks?.length ?? 0) > 0 && <button className="stop-background" title={task.backgroundTasks?.map(item => item.description).join('\n')} onClick={() => task.backgroundTasks?.forEach(item => onCancelBackground(item.id))}>停止后台任务 ({task.backgroundTasks?.length})</button>}
     </div>}
   </article>

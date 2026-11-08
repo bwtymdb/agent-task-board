@@ -58,7 +58,7 @@ export function SettingsPanel({ settings, health, onUpdate, onInstallHooks, onCl
       <div className="health-list">
         {health.map(item => <div className="health-row" key={item.platform}>
           <span className={`health-dot ${item.connected ? 'connected' : ''}`} />
-          <div><strong>{item.platform === 'kimi-code' ? 'Kimi Code' : item.platform === 'workbuddy' ? 'WorkBuddy' : 'Kimi Work'}</strong><small>{item.detail}</small></div>
+          <div><strong>{{ 'kimi-code': 'Kimi Code', workbuddy: 'WorkBuddy', 'kimi-work': 'Kimi Work', 'deepseek-harness': 'DeepSeek Harness' }[item.platform]}</strong><small>{item.detail}</small></div>
         </div>)}
       </div>
       <button className="wide-button" onClick={onInstallHooks}>配置 / 修复 Kimi Code Hooks</button>
@@ -69,6 +69,7 @@ export function SettingsPanel({ settings, health, onUpdate, onInstallHooks, onCl
         <label>Kimi Code 数据目录<input defaultValue={settings.kimiCodeHome || ''} placeholder="%USERPROFILE%\.kimi-code" onBlur={event => onUpdate({ kimiCodeHome: event.target.value || undefined })} /></label>
         <label>WorkBuddy 数据库<input defaultValue={settings.workbuddyDb || ''} placeholder="%USERPROFILE%\.workbuddy\workbuddy.db" onBlur={event => onUpdate({ workbuddyDb: event.target.value || undefined })} /></label>
         <label>Kimi Work 状态文件<input defaultValue={settings.kimiWorkStatusFile || ''} placeholder="%APPDATA%\kimi-desktop\kimi-agent\conversation-statuses.json" onBlur={event => onUpdate({ kimiWorkStatusFile: event.target.value || undefined })} /></label>
+        <label>DeepSeek Harness 数据目录<input defaultValue={settings.dshHome || ''} placeholder="%USERPROFILE%\.dsh（优先使用 DSH_HOME 环境变量）" onBlur={event => onUpdate({ dshHome: event.target.value || undefined })} /></label>
         <p className="setting-note">自定义目录在重启看板后生效。监控保持只读，只有你主动重命名或归档时才执行受限回写。</p>
       </div>}
     </div>

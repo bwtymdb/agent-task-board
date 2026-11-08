@@ -4,6 +4,20 @@
 
 ## [Unreleased]
 
+### 新增
+
+- 接入 DeepSeek Harness 本机会话，支持普通及多帧 Zstandard JSONL 日志、红黄绿状态、星标、别名、筛选、提醒和每日 AI 总结。
+- 设置中可配置 `DSH_HOME`，日志只读，不提供未经验证的会话直达、同步重命名或平台归档。
+
+## [0.3.0] - 2026-11-02
+
+### 变更
+
+- AI 进展从逐轮摘要改为每天一份工作总结，合并当天相同目标，展示完成程度、完成事项、遗留问题和后续建议。
+- 分析期间不再显示旧的逐轮流水账，AI 缓存增加每日总结版本标识。
+- AI 输入仅保留用户指令和每轮最终回复，排除当天内容；按任务和日期缓存，未变化的往日不重复调用。
+- 每天上午 8 点自动检查往日总结，错过开机时段时在看板启动后补做。
+
 ## [0.2.2] - 2026-11-02
 
 ### 新增
@@ -86,6 +100,8 @@
 - Kimi Work 缺少公开完整标题接口时以短 ID 显示，可设置别名。
 - 安装包未购买代码签名证书。
 
+[0.4.0]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.4.0
+[0.3.0]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.3.0
 [0.2.2]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.2
 [0.2.1]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.1
 [0.2.0]: https://github.com/bwtymdb/agent-task-board/releases/tag/v0.2.0

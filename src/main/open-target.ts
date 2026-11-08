@@ -55,6 +55,10 @@ export async function openTask(task: TaskItem, kimiCodeTarget: 'desktop' | 'cli'
     await shell.openExternal(`workbuddy://chat/${encodeURIComponent(task.nativeId)}`)
     return { ok: true, message: '已在 WorkBuddy 中打开原对话。' }
   }
+  if (task.platform === 'deepseek-harness') {
+    await shell.openExternal('dsh://open')
+    return { ok: true, message: '已打开 DeepSeek Harness；当前版本未验证按会话直达。' }
+  }
   const executable = firstExisting([join(process.env.LOCALAPPDATA || '', 'Programs', 'Kimi', 'Kimi.exe')])
   if (!executable) return { ok: false, message: '未找到 Kimi Work 安装路径。' }
   const error = await shell.openPath(executable)

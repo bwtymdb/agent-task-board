@@ -13,6 +13,7 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 
 let board: BoardWindow | undefined
 let hub: ConnectorHub | undefined
+let aiSummary: AiSummaryService | undefined
 let hookServer: HookEventServer | undefined
 let tray: Tray | undefined
 let quitting = false
@@ -36,7 +37,7 @@ else {
       catalogUrl: 'https://raw.githubusercontent.com/bwtymdb/agent-task-board/main/resources/providers.json',
       getSettings: () => settings, updateSettings: saveSettings
     })
-    const aiSummary = new AiSummaryService(ai, hub, join(app.getPath('userData'), 'ai-summaries.json'))
+    aiSummary = new AiSummaryService(ai, hub, join(app.getPath('userData'), 'ai-summaries.json'))
     const onSettings = (next: Settings) => {
       settings = next
       board?.broadcast('settings:changed', next)
@@ -62,6 +63,7 @@ else {
       board?.updateDockTasks(snapshot.tasks)
     })
     await hub.start()
+    aiSummary.start()
 
     const iconPath = app.isPackaged ? join(process.resourcesPath, 'icon.png') : join(process.cwd(), 'resources', 'icon.png')
     tray = new Tray(nativeImage.createFromPath(iconPath))
@@ -83,6 +85,7 @@ else {
   app.on('before-quit', () => {
     quitting = true
     globalShortcut.unregisterAll()
+    aiSummary?.stop()
     void hookServer?.stop()
     void hub?.stop()
   })

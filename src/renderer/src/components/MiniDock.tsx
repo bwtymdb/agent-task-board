@@ -1,6 +1,6 @@
 import type { TaskItem } from '../../../shared/types.ts'
 
-const shortNames = { 'kimi-code': 'KC', workbuddy: 'WB', 'kimi-work': 'KW' }
+const shortNames = { 'kimi-code': 'KC', workbuddy: 'WB', 'kimi-work': 'KW', 'deepseek-harness': 'DSH' }
 
 export function MiniDock({ tasks }: { tasks: TaskItem[] }) {
   const focused = tasks.filter(task => task.focused && !task.archived)

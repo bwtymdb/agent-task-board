@@ -1,10 +1,11 @@
-export type Platform = 'kimi-code' | 'workbuddy' | 'kimi-work'
+export type Platform = 'kimi-code' | 'workbuddy' | 'kimi-work' | 'deepseek-harness'
 export type Light = 'red' | 'yellow' | 'green'
 export type ThemeName = 'midnight' | 'yellow' | 'mint' | 'sky' | 'lavender' | 'rose'
 
 export type BackgroundTask = { id: string; kind: string; description: string; status: string; command?: string }
 export type ProgressEntry = { id: string; timestamp: number | null; summary: string; result?: string; files: string[] }
-export type TaskProgress = { entries: ProgressEntry[]; notice?: string; ai?: { provider: string; model: string; generatedAt: number } }
+export type ProgressDay = { date: string | null; overview: string; completed: string[]; pending: string[]; suggestions: string[]; status: 'completed' | 'in-progress' | 'blocked'; files: string[] }
+export type TaskProgress = { entries: ProgressEntry[]; days?: ProgressDay[]; notice?: string; ai?: { provider: string; model: string; generatedAt: number } }
 export type ConversationTurn = { id: string; timestamp: number | null; user: string; assistant: string; files: string[] }
 export type AiProvider = { id: string; name: string; kind: 'openai' | 'anthropic' | 'gemini'; baseUrl: string; docsUrl?: string }
 export type AiModel = { id: string; name: string }
@@ -47,6 +48,7 @@ export type Settings = {
   kimiCodeHome?: string
   workbuddyDb?: string
   kimiWorkStatusFile?: string
+  dshHome?: string
   aliases: Record<string, string>
   archived: Record<string, boolean>
   overrides: Record<string, Light>

@@ -24,16 +24,16 @@ export function registerIpc(context: IpcContext) {
   ipcMain.handle('settings:get', () => getSettings())
   ipcMain.handle('settings:update', (event, patch: Partial<Settings>) => {
     const allowed: Partial<Settings> = {}
-    for (const key of ['opacity', 'alwaysOnTop', 'clickThrough', 'autoStart', 'theme', 'kimiCodeOpenTarget', 'kimiCodeHome', 'workbuddyDb', 'kimiWorkStatusFile'] as const) {
+    for (const key of ['opacity', 'alwaysOnTop', 'clickThrough', 'autoStart', 'theme', 'kimiCodeOpenTarget', 'kimiCodeHome', 'workbuddyDb', 'kimiWorkStatusFile', 'dshHome'] as const) {
       if (key in patch) Object.assign(allowed, { [key]: patch[key] })
     }
     return updateSettings(allowed)
   })
   ipcMain.handle('task:rename', async (event, key: string, title: string) => {
     if (typeof title !== 'string' || !title.trim() || title.length > 200) return { ok: false, message: '标题不能为空且不能超过 200 字。' }
-    if (key.startsWith('kimi-work:')) {
+    if (key.startsWith('kimi-work:') || key.startsWith('deepseek-harness:')) {
       updateSettings({ aliases: { ...getSettings().aliases, [key]: title.trim() } })
-      return { ok: true, message: '看板别名已更新，不会影响 Kimi Work 原会话标题。' }
+      return { ok: true, message: '看板别名已更新，不会影响原平台会话标题。' }
     }
     await hub.renameTask(key, title.trim())
     return { ok: true, message: '已在看板和原平台同步重命名。' }
@@ -56,7 +56,7 @@ export function registerIpc(context: IpcContext) {
   ipcMain.handle('ai:connect', (event, provider: string, apiKey: string, baseUrl?: string) => ai.connect(provider, apiKey, baseUrl))
   ipcMain.handle('ai:select-model', (event, provider: string, model: string, baseUrl?: string) => ai.selectModel(provider, model, baseUrl))
   ipcMain.handle('task:ai-summarize', (event, key: string) => aiSummary.summarize(key))
-  ipcMain.handle('task:progress', (event, key: string) => aiSummary.getCached(key) || hub.getProgress(key))
+  ipcMain.handle('task:progress', (event, key: string) => aiSummary.getProgress(key))
   ipcMain.on('task:show-progress', (event, key: string) => {
     if (hub.getTask(key)) board.openProgress(key)
   })

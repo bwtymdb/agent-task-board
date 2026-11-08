@@ -110,7 +110,7 @@ function BoardApp() {
     <section className="filter-bar">
       <input className="search-input" value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索任务或项目" aria-label="搜索任务或项目" />
       <select value={platform} onChange={event => setPlatform(event.target.value)} aria-label="平台筛选">
-        <option value="all">全部平台</option><option value="kimi-code">Kimi Code</option><option value="workbuddy">WorkBuddy</option><option value="kimi-work">Kimi Work</option>
+        <option value="all">全部平台</option><option value="kimi-code">Kimi Code</option><option value="workbuddy">WorkBuddy</option><option value="kimi-work">Kimi Work</option><option value="deepseek-harness">DeepSeek Harness</option>
       </select>
     </section>
     <div className="list-toolbar">

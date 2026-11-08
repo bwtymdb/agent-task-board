@@ -142,6 +142,11 @@ export class AiService {
     return ''
   }
 
+  isConfigured() {
+    const settings = this.options.getSettings()
+    return Boolean(settings.aiModel && this.credentials.has(settings.aiProvider))
+  }
+
   getSelected() {
     const settings = this.options.getSettings()
     return { provider: settings.aiProvider, model: settings.aiModel }

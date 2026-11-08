@@ -239,3 +239,18 @@ input, select { background: var(--input, #101820); }
 .ai-status-title button { padding: 2px 6px; border: 1px solid var(--line); border-radius: 3px; color: var(--blue); font-size: 8px; }
 .ai-status-title button:hover { color: var(--text); background: var(--panel-raised); }
 .ai-finish-edit { margin: 0; justify-self: end; }
+.daily-report { padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.daily-report + .daily-report { margin-top: 24px; }
+.daily-report-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.daily-report-head > strong { font-size: 15px; }
+.daily-status { flex: 0 0 auto; padding: 4px 8px; border-radius: 4px; font-size: 10px; }
+.daily-status.completed { color: var(--green); background: color-mix(in srgb, var(--green) 12%, transparent); }
+.daily-status.in-progress { color: var(--yellow); background: color-mix(in srgb, var(--yellow) 12%, transparent); }
+.daily-status.blocked { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
+.daily-overview { margin: 18px 0; color: var(--text); font-size: 13px; line-height: 1.9; }
+.daily-group { margin-top: 15px; }
+.daily-group h3 { margin: 0 0 7px; color: var(--muted); font-size: 11px; font-weight: 600; }
+.daily-group ul { margin: 0; padding-left: 19px; }
+.daily-group li { padding: 4px 0; color: var(--text); font-size: 12px; line-height: 1.8; }
+.daily-group li::marker { color: var(--blue); }
+.daily-files { margin-top: 16px; color: var(--faint); font-size: 10px; }

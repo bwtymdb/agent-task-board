@@ -3,6 +3,7 @@ import type { BoardSnapshot, ConnectorHealth, Settings, TaskItem } from '../../s
 import { KimiCodeConnector } from './kimi-code.ts'
 import { KimiWorkConnector } from './kimi-work.ts'
 import { WorkBuddyConnector } from './workbuddy.ts'
+import { DeepSeekHarnessConnector } from './deepseek-harness.ts'
 
 type Connector = {
   start: () => Promise<void>
@@ -16,6 +17,7 @@ export class ConnectorHub {
   readonly kimiCode: KimiCodeConnector
   readonly workBuddy: WorkBuddyConnector
   readonly kimiWork: KimiWorkConnector
+  readonly deepSeekHarness: DeepSeekHarnessConnector
   private readonly connectors: Connector[]
   private readonly listeners = new Set<(snapshot: BoardSnapshot) => void>()
   private notifyTimer?: NodeJS.Timeout
@@ -27,10 +29,12 @@ export class ConnectorHub {
     const home = settings.kimiCodeHome || `${process.env.USERPROFILE}/.kimi-code`
     const workbuddyDb = settings.workbuddyDb || `${process.env.USERPROFILE}/.workbuddy/workbuddy.db`
     const workFile = settings.kimiWorkStatusFile || `${process.env.APPDATA}/kimi-desktop/kimi-agent/conversation-statuses.json`
+    const dshHome = settings.dshHome || process.env.DSH_HOME || `${process.env.USERPROFILE}/.dsh`
     this.kimiCode = new KimiCodeConnector(home, () => this.scheduleNotify())
     this.workBuddy = new WorkBuddyConnector(workbuddyDb, () => this.scheduleNotify(), backupDirectory)
     this.kimiWork = new KimiWorkConnector(workFile, () => this.scheduleNotify())
-    this.connectors = [this.kimiCode, this.workBuddy, this.kimiWork]
+    this.deepSeekHarness = new DeepSeekHarnessConnector(dshHome, () => this.scheduleNotify())
+    this.connectors = [this.kimiCode, this.workBuddy, this.kimiWork, this.deepSeekHarness]
   }
 
   async start() {
@@ -55,7 +59,7 @@ export class ConnectorHub {
     const tasks = this.connectors.flatMap(connector => connector.getTasks())
       .map(task => ({
         ...task,
-        title: task.platform === 'kimi-work' ? settings.aliases[task.key]?.trim() || task.title : task.title,
+        title: ['kimi-work', 'deepseek-harness'].includes(task.platform) ? settings.aliases[task.key]?.trim() || task.title : task.title,
         focused: Boolean(settings.focused[task.key])
       }))
       .map(task => reconcileHeartbeat(task, Date.now()))
@@ -72,7 +76,7 @@ export class ConnectorHub {
   async renameTask(key: string, title: string) {
     if (key.startsWith('kimi-code:')) await this.kimiCode.rename(key.slice(10), title)
     else if (key.startsWith('workbuddy:')) await this.workBuddy.rename(key.slice(10), title)
-    else if (key.startsWith('kimi-work:')) return
+    else if (key.startsWith('kimi-work:') || key.startsWith('deepseek-harness:')) return
     else throw new Error('该平台不支持重命名')
   }
 
@@ -92,6 +96,7 @@ export class ConnectorHub {
     if (key.startsWith('kimi-code:')) return this.kimiCode.getProgress(key.slice(10))
     if (key.startsWith('workbuddy:')) return this.workBuddy.getProgress(key.slice(10))
     if (key.startsWith('kimi-work:')) return this.kimiWork.getProgress(key.slice(10))
+    if (key.startsWith('deepseek-harness:')) return this.deepSeekHarness.getProgress(key.slice(17))
     throw new Error('该平台不支持进展日志')
   }
 
@@ -100,6 +105,7 @@ export class ConnectorHub {
     if (key.startsWith('kimi-code:')) return this.kimiCode.getConversation(key.slice(10))
     if (key.startsWith('workbuddy:')) return this.workBuddy.getConversation(key.slice(10))
     if (key.startsWith('kimi-work:')) return this.kimiWork.getConversation(key.slice(10))
+    if (key.startsWith('deepseek-harness:')) return this.deepSeekHarness.getConversation(key.slice(17))
     throw new Error('该平台不支持会话进展分析')
   }
 
